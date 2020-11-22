@@ -61,7 +61,7 @@ class PostgreSQL:
        'flag_for_rejection', 'height_differential_between_banks',
        'project_code']
 
-    col_dic = {'b2p_lab28d_sk_tab': columns1, 'predict_sk_tab': columns2}
+    col_dic = {'cleaneddata_table': columns1, 'model_table': columns2}
 
     def conn_curs(self):
         """
@@ -86,7 +86,7 @@ class PostgreSQL:
         conn.close()
         return result
 
-    def fetch_all_records(self, tablename: str='b2p_lab28d_sk_tab'):
+    def fetch_all_records(self, tablename: str='cleaneddata_table'):
         """returns all data/records in json format"""
         # Establishes connection and cursor
         conn, cursor = self.conn_curs()
@@ -102,7 +102,7 @@ class PostgreSQL:
         parsed = json.loads(df_json)
         return parsed
 
-    def fetch_query_given_project(self, project_code: str, tablename: str = 'predict_sk_tab'):
+    def fetch_query_given_project(self, project_code: str, tablename: str = 'model_table'):
         # Establishes connection and cursor
         conn, cursor = self.conn_curs()
         query = f"""SELECT * FROM {tablename} WHERE bridge_opportunity_project_code = '{project_code}';""" 
@@ -120,7 +120,7 @@ class Item(BaseModel):
     """Use this data model to parse the request body JSON."""
 
     project_code: str = Field(..., example='1007374')
-    tablename: str = Field(..., example='predict_sk_tab')
+    tablename: str = Field(..., example='model_table')
 
 
 
@@ -139,7 +139,7 @@ async def get_record(item: Item):
        'flag_for_rejection', 'height_differential_between_banks',
        'project_code']
     
-    - tablenames = 'predict_sk_tab' , 'b2p_lab28d_sk_tab'
+    - tablenames = 'model_table' , 'cleaneddata_table'
 
     """
 
