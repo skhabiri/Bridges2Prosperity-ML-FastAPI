@@ -1,0 +1,52 @@
+clone the repository
+$ git clone https://github.com/skhabiri/bridges-to-prosperity-b2p.git
+
+Use this [Docker Compose](https://docs.docker.com/compose/) command to build your Docker web service image:
+$ docker-compose build
+
+get the docker image id:
+$ docker-compose images
+
+You won't need to rebuild when you update your code.
+You'll only need to rebuild if you update your requirements.txt or Dockerfile.
+Now we can locally launch the web service in docker container with one of the following:
+$ docker-compose up
+
+enter http://0.0.0.0:80 in web browser to launch the API locally
+
+### AWS Elastic Beanstalk:
+- Install [AWS Command Line Interface](https://aws.amazon.com/cli/).
+- [Configure AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-quickstart.html#cli-configure-quickstart-config):
+$ aws configure
+- Install AWS Elastic Beanstalk CLI:
+$ pip install pipx
+$ pipx install awsebcli
+
+- In docker-compose.yml have have 80:8000 on the last line. This will connect host port 80 (the default port for HTTP) to container port 8000 (where the app is running).
+version: '3.7'
+services:
+  web:
+    build: ./project
+    command: uvicorn app.main:app --reload --workers 1 --host 0.0.0.0 --port 8000
+    volumes:
+      - ./project:/usr/src/app
+    ports:
+      - 80:8000
+
+Commit your work:
+$ git add --all
+$ git commit -m "Your commit message"
+
+- Then use these EB CLI commands (Elastic Beanstalk command line interface) to deploy.
+$ eb init --platform docker make-up-your-app-name --region us-east-1
+$ eb create make-up-your-app-name
+$ eb open
+
+- For Redeployment:
+$ git commit ...
+$ eb deploy
+$ eb open
+
+- Next, we use AWS Route 53 to set up a domain name with HTTPS for our DS API.
+Route 53 is Amazon's [Domain Name System (DNS)](https://simple.wikipedia.org/wiki/Domain_Name_System) web service.
+Follow the [instructions](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/resource-record-sets-creating.html#resource-record-sets-elb-dns-name-procedure) to configure a domain name with HTTPS for the DS API.
