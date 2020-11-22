@@ -50,3 +50,9 @@ $ eb open
 - Next, we use AWS Route 53 to set up a domain name with HTTPS for our DS API.
 Route 53 is Amazon's [Domain Name System (DNS)](https://simple.wikipedia.org/wiki/Domain_Name_System) web service.
 Follow the [instructions](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/resource-record-sets-creating.html#resource-record-sets-elb-dns-name-procedure) to configure a domain name with HTTPS for the DS API.
+
+The app is routed to http://b2p.skhabiri.com/
+
+### AWS RDS Postgres
+We need to create a PostgreSQL instance in Amazon RDS. Here you can find instruction for [creating a PostgreSQL DB Instance](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/CHAP_GettingStarted.CreatingConnecting.PostgreSQL.html#CHAP_GettingStarted.Creating.PostgreSQL).
+After DB instance is created, you can use any standard SQL client application to connect to the instance. In this work we use pgAdmin, to connect to PostgreSQL instance. You can download and use pgAdmin without having a local instance of PostgreSQL on your client computer.
