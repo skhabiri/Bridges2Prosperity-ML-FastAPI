@@ -44,7 +44,7 @@ COPY . .
 ```
 
 ### docker-compose.yml 
-defines different services such as web and volume.
+The Compose file is a YAML file defining services such as web and volumes and networks for a Docker application.
 ```
 version: '3.7'
 services:
@@ -52,6 +52,7 @@ services:
     # The web service uses an image that’s built from the Dockerfile located in the ./project directory.
     build: ./project
     
+    #entry point for docker-compose up
     command: uvicorn app.main:app --reload --workers 1 --host 0.0.0.0 --port 8000
 
     # mounts volume ./project to container's /usr/src/app path
