@@ -18,6 +18,53 @@
 
 ![Welcome Video](https://github.com/Lambda-School-Labs/bridges-to-prosperity-ds-d/blob/main/assets/Flowchart.png)
 
+# Docker Compose
+
+### Dockerfile
+This file is used to build a custom image. 
+```
+# pull official base image, python:3.8-slim-buster
+FROM python:3.8-slim-buster
+
+# set the working directory in container to /usr/src/app
+WORKDIR /usr/src/app
+
+# install pip for python3.8 in the custom image
+RUN python -m pip install --upgrade pip
+
+# copy requirements.txt from current directory in docker host to WORKDIR in the image
+COPY ./requirements.txt .
+
+
+# install python dependencies
+RUN pip install -r requirements.txt
+
+# copy everything from docker host current directory to the WORKDIR image (adding app)
+COPY . .
+```
+
+### docker-compose.yml 
+defines different services such as web and volume.
+```
+version: '3.7'
+services:
+  web:
+    # The web service uses an image that’s built from the Dockerfile located in the ./project directory.
+    build: ./project
+    
+    command: uvicorn app.main:app --reload --workers 1 --host 0.0.0.0 --port 8000
+
+    # mounts volume ./project to container's /usr/src/app path
+    volumes:
+      - ./project:/usr/src/app
+    
+    # maps container port 8000 to TCP port 80 on the docker host and from there to the outside world
+    ports:
+      - 80:8000
+```
+mounting ./project directory on the host to /use/src/app inside the container, allows modifying the code on the fly, without having to rebuild the image, as the container gets updated in real time.
+
+
 # How to Create DataBase Hosted in AWS 
 - Log In w/ Credentials to AWS
 - Relational DataBase Section
