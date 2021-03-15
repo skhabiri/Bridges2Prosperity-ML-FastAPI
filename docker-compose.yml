@@ -1,9 +1,16 @@
 version: '3.7'
 services:
   web:
+    # The web service uses an image that’s built from the Dockerfile located in the ./project directory.
     build: ./project
+    
     command: uvicorn app.main:app --reload --workers 1 --host 0.0.0.0 --port 8000
+
+    # mounts volume ./project to container's /usr/src/app path
     volumes:
       - ./project:/usr/src/app
+    
+    # maps container port 8000 to TCP port 80 on the docker host and from there to the outside world
     ports:
       - 80:8000
+
