@@ -170,6 +170,8 @@ Scroll down to the `Connectivity` section, and select the following options:
 * Existing security group = the security group you just created
 Then scroll down and click the `Create database` button. After successful creation Click the `View credential details` button. You'll see your master username, master password, & endpoint. Keep track of these.
 
+Don't share your passwords with the world. In your real app, use environment variables. When developing locally,  you can use python-dotenv to load a .env file. (The .env file is listed in .gitignore)  When you deploy, use the Elastic Beanstalk console for the [configuring environment variables](https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/environments-cfg-softwaresettings.html#environments-cfg-softwaresettings-console) there.
+
 #### Test database
 You can test it using code like this, from any Python notebook, shell, or script, in any environment (where sqlalchemy is installed). 
 ```
@@ -185,6 +187,8 @@ You know you’ve done it correctly if this code runs without error. 🎉 you ca
 
 Or we can connect with psycopg2:
 ```python
+import psycopg2
+
 def conn_curs():
     """
     makes a connection to the database
@@ -199,42 +203,27 @@ def conn_curs():
                                   password=db_password, host= db_host,port=db_port)
     cursor = connection.cursor()
     return connection, cursor
-con, c = conn_curs()
 ```
- 
-Don't share your passwords with the world. In your real app, use environment variables. When developing locally,  you can use python-dotenv to load a .env file. (The .env file is listed in .gitignore)  When you deploy, use the Elastic Beanstalk console for the [configuring environment variables](https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/environments-cfg-softwaresettings.html#environments-cfg-softwaresettings-console) there.
 
-# How to upload Data Frame as SQL Table to DataBase
+Let's see how to work with our database.
+#### How to upload Data to DataBase
 - Convert CSV/Excel into DataFrame format : 
 ```python 
-   df = pd.read("file_location")
+df = pd.read("file_location")
 ```
 - Upload DataFrame to SQL Table
 ```python   
-   table_name = 'table_name'
-   df.to_sql(table_name, con)
+con, c = conn_curs()
+table_name = 'table_name'
+df.to_sql(table_name, con)
 ```
-- Test SQL Table that is connected to DataBase.
-- Check out Bridges_2_Prosperity_Final_Merged_DataFrameToPostgresSQL.ipynb notebook to see an example.
+- Test Queries to Table B2P_oct_2018
+query  = """SELECT "Bridge_Name" from public."B2P_oct_2018" where "Bridge_Name" = 'Bukinga' LIMIT 1;"""
+cursor.execute(query)
+result = cursor.fetchall()
+conn.close
 
-## Test Queries to Table B2P_oct_2018
-
-```python
-    # Testing Query to get Records based on Bridge Name
-    conn, cursor = conn_curs()
-    query  = """SELECT "Bridge_Name" from public."B2P_oct_2018" where "Bridge_Name" = 'Bukinga' LIMIT 1;"""
-    cursor.execute(query)
-    result = cursor.fetchall()
-    conn.close
-```
-
-# How to Run App Locally
-- Make sure u have a local .env file with proper secrets
+#### How to Run App Locally
 - Save your .env file in the following location: project/app/api/.env 
-- Go to your terminal run: docker-compose up
-
-
-
-
-
+- from repo directory run: `docker-compose up`
 
