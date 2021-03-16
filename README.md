@@ -223,7 +223,68 @@ cursor.execute(query)
 result = cursor.fetchall()
 conn.close
 
-#### How to Run App Locally
-- Save your .env file in the following location: project/app/api/.env 
-- from repo directory run: `docker-compose up`
+### FastAPI app
+Save your .env file in the following location: project/app/api/.env  and run the app locally from repo directory: `docker-compose up`, which will run `uvicorn app.main:app --reload` in the container. You can open it in browser at `localhost:80`.
 
+#### example
+An example for creating an endpoint:
+open a new file: `app/messages.py`. Copy this starter code.
+```
+"""Friendly messsages"""
+from fastapi import APIRouter
+router = APIRouter()
+
+@router.get('/hello')
+async def hello():
+    """Returns a friendly greeting 👋"""
+    pass
+```
+Change the function so it returns JSON: `{"messsage": "Hello World!"}`
+open the `app/main.py` file and import `messages` module.
+```
+from app import db, ml, viz, messages
+```
+and include the created route.
+```
+app.include_router(db.router, tags=['Database'])
+app.include_router(ml.router, tags=['Machine Learning'])
+app.include_router(viz.router, tags=['Visualization'])
+app.include_router(messages.router, tags=['Friendly Messages'])
+```
+Refresh the browser now.
+To change the function so it takes a person's name as input and returns messages like "Hello Alice!", Refer to the next sections in the FastAPI Tutorial:
+* [Path Parameters](https://fastapi.tiangolo.com/tutorial/path-params/)
+* [Query Parameters](https://fastapi.tiangolo.com/tutorial/query-params/)
+* [Request Body](https://fastapi.tiangolo.com/tutorial/body/)
+You can read about concurency and async keyword [here](https://fastapi.tiangolo.com/async/).
+
+Links for more on FastAPI:
+* [Build a machine learning API from scratch by FastAPI's creator](https://youtu.be/1zMQBe0l1bM)
+* [calmcode.io — FastAPI videos](https://calmcode.io/fastapi/hello-world.html)
+* [FastAPI for Flask Users](https://amitness.com/2020/06/fastapi-vs-flask/)
+* [FastAPI official docs](https://fastapi.tiangolo.com/)
+* [How to Set Up a HTML App with FastAPI, Jinja, Forms & Templates](https://eugeneyan.com/writing/how-to-set-up-html-app-with-fastapi-jinja-forms-templates/)
+* [Implementing FastAPI Services – Abstraction and Separation of Concerns](https://camillovisini.com/article/abstracting-fastapi-services/)
+* [testdriven.io — FastAPI blog posts](https://testdriven.io/blog/topics/fastapi/)
+
+#### Deploy the FastAPI app to AWS Elastic Beanstalk
+Follow these instructions to deploy the first time. 🚀
+
+1. If you are not using docker and `Dockerfile` then you need to create a `Procfile`, with this line: `web: gunicorn app.main:app -w 4 -k uvicorn.workers.UvicornWorker` (Like on Heroku, the Procfile tells AWS what command to run. We’ve had better luck in the past using gunicorn instead of uvicorn with the Python platform on AWS Elastic Beanstalk.)
+2. install gunicorn
+3. install typing-extensions (a dependency needed on Python 3.7, which is the version Elastic Beanstalk is still using)
+4. build the docker image or pipenv install the above in an activated env
+5. git add --all
+6. git commit -m "Your commit message"
+7. in pipenv: `eb init --platform python-3.7 --region us-east-1 CHOOSE-YOUR-NAME` (Instead of using `Docker` as the platform, use Python 3.7. AWS will look for either a `requirements.txt` or `Pipfile.lock` or `Pipfile` to install your dependencies, in that order. You should have both a `Pipfile.lock` and `Pipfile` in your repo.). If you are using docker image: `eb init --platform docker --region us-east-1 CHOOSE-YOUR-NAME`
+8. eb create --region us-east-1 CHOOSE-YOUR-NAME
+9. If your app uses environment variables, set them in the [Elastic Beanstalk console](https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/environments-cfg-softwaresettings.html#environments-cfg-softwaresettings-console)
+10. eb open
+11. Check your logs in the [Elastic Beanstalk console](https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/using-features.logging.html), to see any error messages
+
+Reference docs: 
+https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/create-deploy-python-apps.html
+https://fastapi.tiangolo.com/deployment/manually/
+
+#### Clean up AWS
+If not needed delete all application versions and terminate the environment to avoid extra cost. Link to [doc](https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/GettingStarted.Cleanup.html)
