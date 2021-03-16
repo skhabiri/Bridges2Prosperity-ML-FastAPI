@@ -15,7 +15,7 @@
 [Deployed API#2](https://d-ds-labs28.bridgestoprosperity.dev )
 
 # Architeture
-
+Use [Whimsical](https://whimsical.com/) account.
 ![Welcome Video](https://github.com/Lambda-School-Labs/bridges-to-prosperity-ds-d/blob/main/assets/Flowchart.png)
 
 # Setting up the Project:
@@ -102,7 +102,86 @@ Now we can locally launch the web service in docker container with `docker-compo
 enter http://0.0.0.0:80 in web browser to launch the API locally
 
 
+# AWS
+AWS is a cloud platform that offers various services. SOme the most important one for us:
 
+#### AWS EC2
+`Amazon Elastic Compute Cloud` (Amazon EC2) is a web service that provides secure, resizable compute capacity in the cloud. It is designed to make web-scale cloud computing easier for developers. Amazon EC2’s simple web service interface allows you to obtain and configure capacity with minimal friction. This is like virtual private servers.
+
+#### AWS Elastic Beanstalk
+AWS Elastic Beanstalk is an easy-to-use service for deploying and scaling web applications and services developed with Java, .NET, PHP, Node.js, Python, Ruby, Go, and Docker on familiar servers such as Apache, Nginx, Passenger, and IIS.
+You can upload your code and Elastic Beanstalk automatically handles the deployment, from capacity provisioning, load balancing, auto-scaling to application health monitoring.
+
+#### AWS RDS
+To set up, operate, and scale a relational database in the cloud. Amazon RDS is a `Relational Database Service` that handles MySQL, Oracle or Microsoft SQL Server database engine. This means that the code, applications, and tools you already use today with your existing databases can be used with Amazon RDS. Amazon RDS automatically patches the database software and backs up your database, storing the backups for a user-defined retention period and enabling point-in-time recovery. You benefit from the flexibility of being able to scale the compute resources or storage capacity associated with your Database Instance (DB Instance) via a single API call. Some of the features offered by Amazon RDS are:
+- Pre-configured Parameters
+- Monitoring and Metrics
+- Automatic Software Patching
+
+#### AWS EBS
+EBS is a virtual hard drive that you connect to your EC2 instance. Amazon `Elastic Block Store` (EBS) is a high-performance, block-storage service designed for use with Amazon Elastic Compute Cloud (EC2) for both throughput and transaction intensive workloads at any scale. A broad range of workloads, such as relational and non-relational databases, enterprise applications, containerized applications, big data analytics engines, file systems, and media workflows are widely deployed on Amazon EBS.
+
+#### AWS S3 
+S3 provides standalone storage. You can store and retrieve any amount of data, at any time, from anywhere on the web. `Amazon Simple Storage Service` provides a fully redundant data storage infrastructure for storing and retrieving any amount of data, at any time, from anywhere on the web.  You don't need to run an EC2 instance. and S3 is basically a hard drive with no computer and henece no processing of data. Use this to store images and other assets for websites. Keep backups and share files between services. Host static websites. Also, many of the other AWS services write and read from S3.
+
+Amazon RDS belongs to `SQL Database as a Service` category of the tech stack, while Amazon S3 can be primarily classified under `Cloud Storage`.
+Amazon S3 provides the following key features:
+- Write, read, and delete objects of any size. The number of objects you can store is unlimited.
+- Each object is stored in a bucket and retrieved via a unique, developer-assigned key.
+- A bucket can be stored in one of several Regions. You can choose a Region to optimize for latency, minimize costs, or address regulatory requirements.
+
+#### Route53
+To set up the DNS records for a domain.
+
+#### Install AWS CLI (Command Line Interface):
+Install the aws cli from [here](https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2-mac.html). Check that the aws cli is installed by `which aws`.
+
+#### Install AWS Elastic Beanstalk CLI
+Use `pip install awsebcli` for that and check the successful installation with `eb --version`. Later on we'll use that to deploy Docker image to AWS elastic beanstalk.
+
+#### Sign into your aws account
+Make sure to choose us-east-1 region, and create a IAM user for the app instead of using the root credentials. You would also want to take a note of the secret access key, access key id and the account id or create an account alias.
+
+#### Configure AWS CLI
+use `aws configure` to enter the credentials. Those data are saved in `~/.aws/credentials` and `~/.aws/config`.
+
+#### Building:
+As a part of data science team the task is to train the model, deploy model in the cloud, and integrate machine learning into web product, using this tech stack:
+* FastAPI: Web framework. Like Flask, but faster, with automatic interactive docs.
+* AWS RDS Postgres: Relational database service. Like ElephantSQL.
+* AWS Elastic Beanstalk: Platform as a service, hosts your API. Like Heroku.
+* Docker: Containers, for reproducibility. Like virtual environments, but more reproducible.
+
+
+#### Create security group
+In EC2 service create a `security group`. This will be use when creating the database. In the `Inbound rules` section, click the `Add rule` button. For `Type`, select `PostgreSQL`. For `Source`, select `Anywhere`.
+
+#### Create databas
+Go to the RDS service. Click the `Create database` button. Select the following options:
+* Database creation method = Standard create
+* Engine type = PostgreSQL
+* Template = Free tier
+* DB instance identifier = you make up a name
+* Master username = make up a name
+* Master password = you make up a password
+Scroll down to the `Connectivity` section, and select the following options:
+* Public access = Yes
+* VPC security group = Choose existing
+* Existing security group = the security group you just created
+Then scroll down and click the `Create database` button. After successful creation Click the `View credential details` button. You'll see your master username, master password, & endpoint. Keep track of these.
+
+#### Test database
+You can test it using code like this, from any Python notebook, shell, or script, in any environment (where sqlalchemy is installed). 
+```
+import sqlalchemy
+
+# Replace username, password, & blah.blah.blah
+database_url = 'postgresql://username:password@blah.blah.blah.us-east-1.rds.amazonaws.com/postgres'
+
+engine = sqlalchemy.create_engine(database_url)
+connection = engine.connect()
+```
+You know you’ve done it correctly if this code runs without error. 🎉
 
 
 
