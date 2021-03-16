@@ -156,7 +156,7 @@ As a part of data science team the task is to train the model, deploy model in t
 #### Create security group
 In EC2 service create a `security group`. This will be use when creating the database. In the `Inbound rules` section, click the `Add rule` button. For `Type`, select `PostgreSQL`. For `Source`, select `Anywhere`.
 
-#### Create databas
+#### Create databas hosted in AWS
 Go to the RDS service. Click the `Create database` button. Select the following options:
 * Database creation method = Standard create
 * Engine type = PostgreSQL
@@ -181,44 +181,32 @@ database_url = 'postgresql://username:password@blah.blah.blah.us-east-1.rds.amaz
 engine = sqlalchemy.create_engine(database_url)
 connection = engine.connect()
 ```
-You know you’ve done it correctly if this code runs without error. 🎉
+You know you’ve done it correctly if this code runs without error. 🎉 you can also connect by `pgadmin` or `datagrip`.
 
-
-
-
-
-# How to Create DataBase Hosted in AWS 
-- Log In w/ Credentials to AWS
-- Relational DataBase Section
-- Click Create DataBase, choose desired database, ex) PostGres
-- Configure Settings, Make Password, Username
-- Connect with pgadmin, datagrip
-- TIP: Allow public access, create security groups incase you have trouble connecting via your domain
-
-# How to Connect to data Base
-- Save secret in .env file into 
-- Create connection, cursor to the database using psycopg2
-- Can make a function that constructs connections via function or simply type connections explicitly
+Or we can connect with psycopg2:
 ```python
-    def conn_curs():
-        """
-        makes a connection to the database
-        """
-        global db_name
-        global db_user
-        global db_password
-        global db_host
-        global db_port
-        
-        connection = psycopg2.connect(dbname=db_name, user= db_user,
-                                      password=db_password, host= db_host,port=db_port)
-        cursor = connection.cursor()
-        return connection, cursor
+def conn_curs():
+    """
+    makes a connection to the database
+    """
+    global db_name
+    global db_user
+    global db_password
+    global db_host
+    global db_port
+
+    connection = psycopg2.connect(dbname=db_name, user= db_user,
+                                  password=db_password, host= db_host,port=db_port)
+    cursor = connection.cursor()
+    return connection, cursor
+con, c = conn_curs()
 ```
+ 
+Don't share your passwords with the world. In your real app, use environment variables. When developing locally,  you can use python-dotenv to load a .env file. (The .env file is listed in .gitignore)  When you deploy, use the Elastic Beanstalk console for the [configuring environment variables](https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/environments-cfg-softwaresettings.html#environments-cfg-softwaresettings-console) there.
+
 # How to upload Data Frame as SQL Table to DataBase
 - Convert CSV/Excel into DataFrame format : 
 ```python 
-   #Make sure your file location does actually coresspond to a  working link
    df = pd.read("file_location")
 ```
 - Upload DataFrame to SQL Table
@@ -232,8 +220,7 @@ You know you’ve done it correctly if this code runs without error. 🎉
 ## Test Queries to Table B2P_oct_2018
 
 ```python
-    
-    # Testing Query to get Records based on Bridge Naem
+    # Testing Query to get Records based on Bridge Name
     conn, cursor = conn_curs()
     query  = """SELECT "Bridge_Name" from public."B2P_oct_2018" where "Bridge_Name" = 'Bukinga' LIMIT 1;"""
     cursor.execute(query)
@@ -242,7 +229,7 @@ You know you’ve done it correctly if this code runs without error. 🎉
 ```
 
 # How to Run App Locally
-- Make sure u have a local.env file with proper secrets
+- Make sure u have a local .env file with proper secrets
 - Save your .env file in the following location: project/app/api/.env 
 - Go to your terminal run: docker-compose up
 
