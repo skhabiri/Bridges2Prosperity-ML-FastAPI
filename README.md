@@ -143,6 +143,14 @@ This is step one, where the caller (aka client) asks the name servers in your ho
 Once the client has the IP address, it will connect to your API, which is hosted in your Elastic Beanstalk environment. We've made this connection secure by adding an SSL certificate to the load balancer and enabling HTTPS. The client will then send encrypted traffic over the internet to the loadbalancer attached to the API. Then, the load balancer sends the traffic to the actual API instances, running on servers or in containers. Since the load balancer and api application instance are on the same private network (not on the internet) we don't need to keep the traffic encrypted between them, which adds cost and reduces performance.
 The traffic is decrypted by the load-balancer and sent to the application as unencrypted HTTP traffic on port 80.
 
+____
+## Building The App
+As a part of data science team the task is to train the model, deploy model in the cloud, and integrate machine learning into web product. The following tech stack is used:
+* FastAPI: Web framework. Like Flask, but faster, with automatic interactive docs.
+* AWS RDS Postgres: Relational database service. Like ElephantSQL.
+* AWS Elastic Beanstalk: Platform as a service, hosts your API. Like Heroku.
+* Docker: Containers, for reproducibility. Like virtual environments, but more reproducible.
+
 ### Setup AWS interface on the local host
 
 #### Install AWS CLI (Command Line Interface):
@@ -312,19 +320,11 @@ Results:
 you can also connect by `pgadmin` or `datagrip`.
 The API gives us access to database for web development by providing JSON data.
 
-## Building The App
-As a part of data science team the task is to train the model, deploy model in the cloud, and integrate machine learning into web product, using this tech stack:
-* FastAPI: Web framework. Like Flask, but faster, with automatic interactive docs.
-* AWS RDS Postgres: Relational database service. Like ElephantSQL.
-* AWS Elastic Beanstalk: Platform as a service, hosts your API. Like Heroku.
-* Docker: Containers, for reproducibility. Like virtual environments, but more reproducible.
-
 
 ### FastAPI app
-Save your .env file in the following location: project/app/api/.env  and run the app locally from repo directory: `docker-compose up`, which will run `uvicorn app.main:app --reload` in the container. You can open it in browser at `localhost:80`.
+An example on how to create an endpoint route for GET and POST requests.
 
-#### example
-An example for creating an endpoint:
+#### GET request
 open a new file: `app/messages.py`. Copy this starter code.
 ```
 """Friendly messsages"""
@@ -333,10 +333,10 @@ router = APIRouter()
 
 @router.get('/hello')
 async def hello():
-    """Returns a friendly greeting 👋"""
-    pass
+  return {"messsage": "Hello World!"}
 ```
-Change the function so it returns JSON: `{"messsage": "Hello World!"}`
+It returns JSON.
+
 open the `app/main.py` file and import `messages` module.
 ```
 from app import db, ml, viz, messages
@@ -349,13 +349,26 @@ app.include_router(viz.router, tags=['Visualization'])
 app.include_router(messages.router, tags=['Friendly Messages'])
 ```
 Refresh the browser now.
-To change the function so it takes a person's name as input and returns messages like "Hello Alice!", Refer to the next sections in the FastAPI Tutorial:
+
+#### POST request
+For example let's create a API endpoint for a machine learning model that predict rent. The input to the model is # of beds and baths. Then the endpoint should accept POST requests, not GET requests.
+```
+@router.post('/predict_rent')
+async def rent(beds, baths):
+  return {"rent": model.predict(beds, baths)}
+```
+
+Data science can deploy machine learning models through API endpoints. When clients make requests to your API endpoints, the inputs might not be valid. That means 
+"Garbage in, garbage out". So we'll create a [data class](https://docs.python.org/3/library/dataclasses.html) with [type annotations](https://docs.python.org/3/library/typing.html) to define what attributes we expect our input to have. We'll use [Pydantic](https://pydantic-docs.helpmanual.io/), a data validation library integrated with FastAPI.
+To learn more, see these docs:
+* [Pydantic docs > Field types](https://pydantic-docs.helpmanual.io/usage/types/)
+* [Pydantic docs > Validators](https://pydantic-docs.helpmanual.io/usage/validators/)
+
+Links for more on FastAPI:
 * [Path Parameters](https://fastapi.tiangolo.com/tutorial/path-params/)
 * [Query Parameters](https://fastapi.tiangolo.com/tutorial/query-params/)
 * [Request Body](https://fastapi.tiangolo.com/tutorial/body/)
 You can read about concurency and async keyword [here](https://fastapi.tiangolo.com/async/).
-
-Links for more on FastAPI:
 * [Build a machine learning API from scratch by FastAPI's creator](https://youtu.be/1zMQBe0l1bM)
 * [calmcode.io — FastAPI videos](https://calmcode.io/fastapi/hello-world.html)
 * [FastAPI for Flask Users](https://amitness.com/2020/06/fastapi-vs-flask/)
@@ -363,27 +376,12 @@ Links for more on FastAPI:
 * [How to Set Up a HTML App with FastAPI, Jinja, Forms & Templates](https://eugeneyan.com/writing/how-to-set-up-html-app-with-fastapi-jinja-forms-templates/)
 * [Implementing FastAPI Services – Abstraction and Separation of Concerns](https://camillovisini.com/article/abstracting-fastapi-services/)
 * [testdriven.io — FastAPI blog posts](https://testdriven.io/blog/topics/fastapi/)
+* [FastAPI docs > Tutorial - User Guide > Request Body](https://fastapi.tiangolo.com/tutorial/body/)
+* [FastAPI docs > Python Types Intro ](https://fastapi.tiangolo.com/python-types/)
+* [FastAPI docs > Concurrency and async / await](https://fastapi.tiangolo.com/async/)
+* [RealPython.com Primer on Python Decorators](https://realpython.com/primer-on-python-decorators/)
 
-
-### Deploying the machine learning model
-Data science can deploy machine learning models through API endpoints. When clients make requests to your API endpoints, the inputs might not be valid. That means 
-Garbage in, garbage out". So we'll create a [data class](https://docs.python.org/3/library/dataclasses.html) with [type annotations](https://docs.python.org/3/library/typing.html) to define what attributes we expect our input to have. We'll use [Pydantic](https://pydantic-docs.helpmanual.io/), a data validation library integrated with FastAPI.
-To learn more, see these docs:
-* [Pydantic docs > Field types](https://pydantic-docs.helpmanual.io/usage/types/)
-* [Pydantic docs > Validators](https://pydantic-docs.helpmanual.io/usage/validators/)
-
-
-For example let's create a API endpoint for a machine learning model that predict rent. The input to the model is # of beds and baths. Then the endpoint should accept POST requests, not GET requests.
-```
-@router.post('/predict_rent')
-async def rent(beds, baths):
-```
-More info:
-- [FastAPI docs > Tutorial - User Guide > Request Body](https://fastapi.tiangolo.com/tutorial/body/)
-- [FastAPI docs > Python Types Intro ](https://fastapi.tiangolo.com/python-types/)
-- [FastAPI docs > Concurrency and async / await](https://fastapi.tiangolo.com/async/)
-- [RealPython.com Primer on Python Decorators](https://realpython.com/primer-on-python-decorators/)
-
+#### Model serialization
 Now let's use a scikit-learn model. We want to save the a trained model so you can use it without retraining. This is sometimes called "pickling."  See [scikit-learn docs on "model persistence"](https://scikit-learn.org/stable/modules/model_persistence.html) & [Keras docs on "serialization and saving."](https://keras.io/guides/serialization_and_saving/)
 ```
 import joblib
@@ -410,7 +408,8 @@ Add these lines of code to your app/ml.py file.
 import joblib
 model = joblib.load('app/model.joblib')
 ```
-Launch your FastAPI app and see if your code works.
+Save your .env file in the following location: project/app/api/.env  and run the app locally from repo directory: `docker-compose up`, which will run `uvicorn app.main:app --reload` in the container with specified python version and installed packages built in the docker image. If there is a need, docker-compose will rebuild the image and create a container based on that. You can open the app in browser at `localhost:80`.
+Or with pipenv use:
 ```
 pipenv shell
 uvicorn app.main:app --reload
@@ -419,15 +418,15 @@ uvicorn app.main:app --reload
 ## Deploy the FastAPI app to AWS Elastic Beanstalk
 Follow these instructions to deploy the first time. 🚀
 
-1. If you are not using docker and `Dockerfile` then you need to create a `Procfile`, with this line: `web: gunicorn app.main:app -w 4 -k uvicorn.workers.UvicornWorker` (Like on Heroku, the Procfile tells AWS what command to run. We’ve had better luck in the past using gunicorn instead of uvicorn with the Python platform on AWS Elastic Beanstalk.)
+1. If you are not using docker and `Dockerfile` then you need to create a `Procfile`, with this line: `web: gunicorn app.main:app -w 4 -k uvicorn.workers.UvicornWorker` (Like on Heroku, the Procfile tells AWS what command to run. We’ve had better luck in the past using gunicorn instead of uvicorn with the Python platform on AWS Elastic Beanstalk.). If you are using docker platform, Dockerfile is sufficient to build the image and launch it in beanstalk.
 2. install gunicorn
 3. install typing-extensions (a dependency needed on Python 3.7, which is the version Elastic Beanstalk is still using)
 4. build the docker image or pipenv install the above in an activated env
 5. `git add --all`
 6. `git commit -m "Your commit message"`
-7. `eb init --platform docker make-up-your-app-name --region us-east-1`. 
+7. `eb init --platform docker your-app-name --region us-east-1`
   - in pipenv: `eb init --platform python-3.7 --region us-east-1 CHOOSE-YOUR-NAME` (Instead of using `docker` as the platform, use Python 3.7. AWS will look for either a `requirements.txt` or `Pipfile.lock` or `Pipfile` to install your dependencies, in that order. You should have both a `Pipfile.lock` and `Pipfile` in your repo.). 
-8. `eb create make-up-your-app-name`
+8. `eb create your-app-name`
 9. If your app uses environment variables, set them in the [Elastic Beanstalk console](https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/environments-cfg-softwaresettings.html#environments-cfg-softwaresettings-console)
 10. `eb open`
 11. Check your logs in the [Elastic Beanstalk console](https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/using-features.logging.html), to see any error messages. When your application is deployed to Elastic Beanstalk, you'll get an automatically generated URL that you can use to connect to your API.
