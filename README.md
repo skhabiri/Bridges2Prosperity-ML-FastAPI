@@ -1,5 +1,3 @@
-# Welcome to our Repo! 
-[![Welcome Video](https://imgur.com/7gaai5K.png)](https://youtu.be/1qVVODfPtto)
 
 # Links to Deployments
 <p>&nbsp;</p>
@@ -435,6 +433,7 @@ Reference docs:
 https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/create-deploy-python-apps.html
 https://fastapi.tiangolo.com/deployment/manually/
 
+[![Welcome Video](https://imgur.com/7gaai5K.png)](https://youtu.be/1qVVODfPtto)
 
 ## Clean up AWS
 If not needed delete all application versions and terminate the environment to avoid extra cost. Link to [doc](https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/GettingStarted.Cleanup.html)
