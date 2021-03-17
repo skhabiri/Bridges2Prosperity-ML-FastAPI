@@ -33,11 +33,11 @@ git config user.name <git_username>
 We can either use `pipenv` or `docker` to reproduce the environment.
 
 ### pipenv
-cd to the repo directory and install dependencies. In general `Pipfile` supercede requirements.txt. However, if you only have a requirements.txt file available when running `pipenv install --dev`, pipenv will automatically import the contents of this file and create a Pipfile for you. Or you could be specific with `pipenv install -r path/to/requirements.txt` to import a requirements file. 
+`cd` to the repo directory and install dependencies. In general `Pipfile` supercede `requirements.txt`. However, if you only have a `requirements.txt` file available when running `pipenv install --dev`, pipenv will automatically import the contents of this file and creates a `Pipfile` for you. You could also be specific with `pipenv install -r path/to/requirements.txt` to import a requirements file. 
 Now activate the virtual environment with `pipenv shell`.
-To work with the notebook you can create a ipykernel from the env and launch jupyter in env with `pipenv run jupyter notebook`. For working with .py files in IDE you can use VS Code by running `code .`. Make sure you have the Python extension in **View → Extensions**. Now activate the env by **View → Command Palette → Python: Select Interpreter**
+To work with the notebook you can create a ipykernel from the env and launch jupyter in env with `pipenv run jupyter lab`. In your VS Code IDE make sure you have the Python extension in **View → Extensions**, and activate the env by **View → Command Palette → Python: Select Interpreter**
 
-Instead of pipenv we can use Docker to run our app in an isolated disposable container.
+In this project instead of pipenv we use Docker Compose to run our app in an isolated disposable container.
 
 ### Docker
 For building a docker image we need Dockerfile which specifies: the base python to use, working directory on the image volume, all the package dependencies, and the files (web app) that needs to be copied from the host container to the image.
