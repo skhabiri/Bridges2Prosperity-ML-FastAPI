@@ -11,7 +11,9 @@ router = APIRouter()
 
 
 class Item_query(BaseModel):
-    """Selected columns used in the model in JSON format"""
+    """Selected columns used in the model in JSON format
+    These variables are attributes of Item_query instance (self)
+    """
 
     bridge_classification: str = Field(..., example='Standard')
     bridge_opportunity_bridge_type: str = Field(..., example='Suspension Bridge')

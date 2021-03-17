@@ -28,6 +28,7 @@ class PostgreSQL:
         DB_HOST = os.getenv("DB_HOST")
         DB_PORT = os.getenv("DB_PORT")
 
+        # connect to aws rds db 
         self.connection = psycopg2.connect(dbname=DB_NAME, user=DB_USER, password=DB_PASSWORD,
                                   host=DB_HOST, port=DB_PORT)
 
@@ -56,6 +57,7 @@ class PostgreSQL:
        'bridge_opportunity_general_project_photos',
        'bridge_opportunity_casesafeid', 'country', 'good_site']
 
+    # features that are used for modeling
     columns2 = ['bridge_opportunity_bridge_type', 'bridge_opportunity_span_m',
        'days_per_year_river_is_flooded', 'bridge_classification',
        'flag_for_rejection', 'height_differential_between_banks',
@@ -96,13 +98,21 @@ class PostgreSQL:
         cursor.close()
         conn.close()
         # create a dataframe from result
+        # reading col_dic not found locally goes a level up in scope
         df = pd.DataFrame(result, columns=['index'] + self.col_dic[tablename])
-        df = df.iloc[:, 1:]  # skip 1 column, as it corresponds to an index column
+        df = df.iloc[:, 1:]  # skip 1'st column, as it corresponds to an index column
+        # return value is json "string"
+        # ‘records’ : list like [{column -> value}, … , {column -> value}]
         df_json = df.to_json(orient='records')
+        # parse a valid JSON string and convert it into a Python Dictionary. 
         parsed = json.loads(df_json)
         return parsed
 
     def fetch_query_given_project(self, project_code: str, tablename: str = 'model_table'):
+        """
+        there is a default value for tablename 
+        but in the API, user needs to enter project_code manually
+        """
         # Establishes connection and cursor
         conn, cursor = self.conn_curs()
         query = f"""SELECT * FROM {tablename} WHERE bridge_opportunity_project_code = '{project_code}';""" 
@@ -117,8 +127,8 @@ class PostgreSQL:
         return parsed
 
 class Item(BaseModel):
-    """Use this data model to parse the request body JSON."""
-
+    """Use this data model to parse the request body JSON.
+    It's not for inserting entry to a database"""
     project_code: str = Field(..., example='1007374')
     tablename: str = Field(..., example='model_table')
 
@@ -127,13 +137,14 @@ class Item(BaseModel):
 @router.post('/data_by_bridge_code')
 async def get_record(item: Item):
     """
-    # Returns a record, based on project_code and DB table name
+    # Returns a record, based on project_code and DB table name.
+    'item' is a datatype with '.project_code' and '.tablename' attributes.
 
     ### Request Body
     - `project_code`: string
     - `tablename`: string
 
-    ### Response with selected columns used for modeling based on Bridge Code in JSON FORMAT
+    ### Response with columns values in selected tablename, filtered by the Bridge Code in JSON FORMAT
     - ['bridge_opportunity_bridge_type', 'bridge_opportunity_span_m',
        'days_per_year_river_is_flooded', 'bridge_classification',
        'flag_for_rejection', 'height_differential_between_banks',
