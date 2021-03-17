@@ -89,6 +89,9 @@ services:
       - 80:8000
 ```
 mounting ./project directory on the host to /use/src/app inside the container, allows modifying the code on the fly, without having to rebuild the image, as the container gets updated in real time.
+In docker-compose.yml have have 80:8000 on the last line. This will connect host port 80 (the default port for HTTP) to container port 8000 (where the app is running).
+
+
 from the directory with docker-compose.yml we build the docker services image:
 ```
 docker-compose build #builds the images, does not start the containers
@@ -155,6 +158,92 @@ As a part of data science team the task is to train the model, deploy model in t
 
 #### Create security group
 In EC2 service create a `security group`. This will be use when creating the database. In the `Inbound rules` section, click the `Add rule` button. For `Type`, select `PostgreSQL`. For `Source`, select `Anywhere`.
+
+
+### AWS RDS Postgres
+In order to have access to the dataset while connecting to data science API, We create a PostgreSQL database instance in Amazon RDS. Here you can find instruction for [creating a PostgreSQL DB Instance](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/CHAP_GettingStarted.CreatingConnecting.PostgreSQL.html#CHAP_GettingStarted.Creating.PostgreSQL).
+After DB instance is created, you can use any standard SQL client application such as [pgAdmin](https://www.pgadmin.org/) to connect to the database instance. You can download and use pgAdmin without having a local instance of PostgreSQL on your client computer. Using the database client (`pgAdmin4`) we create a database in RDS cloud and connect to it from client computer through `psycopg2` a python library for PostgreSQL.
+
+Here is a snippet of the code in Jupyter Notebook.
+```
+# Install database related packages
+!pip install python-dotenv
+!pip install psycopg2-binary
+!pip install SQLAlchemy
+```
+Add the newly installed packages to the requirements.txt file to rebuild docker-compose
+```
+echo python-dotenv >> requirements.txt
+echo psycopg2-binary>> requirements.txt
+echo SQLAlchemy>> requirements.txt
+```
+Import packages
+```
+import psycopg2
+from dotenv import load_dotenv
+import sqlalchemy
+from sqlalchemy.ext.declarative import declarative_base
+import logging
+```
+Loading .env file with database credentials
+```
+file_path = os.path.abspath('$APP_DIR')
+load_dotenv(os.path.join(file_path, '.env'))
+
+db_name = os.getenv("DB_NAME")
+db_user = os.getenv("DB_USER")
+db_password = os.getenv("DB_PASSWORD")
+db_host = os.getenv("DB_HOST")
+db_port = os.getenv("DB_PORT")
+```
+Connect to database
+```
+engine = sqlalchemy.create_engine(f"postgresql://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}")
+con = engine.connect()
+```
+Upload the data into database tables
+```
+dfp = pd.read_csv("../Data/predict_df.csv")
+df = pd.read_csv("../Data/main_data_clean.csv")
+df.to_sql('cleaneddata_table', con, if_exists='replace')
+dfp.to_sql('model_table', con, if_exists='replace')
+con.close()
+```
+Let's make a query to validate the data in created tables
+```
+def conn_curs():
+    """
+    makes a connection to the database
+    """
+    global db_name
+    global db_user
+    global db_password
+    global db_host
+    global db_port
+
+    connection = psycopg2.connect(dbname=db_name, user= db_user, password=db_password, host= db_host,port=db_port)
+    cursor = connection.cursor()
+    return connection, cursor
+
+def fetch_query_records(query):
+    global conn_curs
+    conn, cursor = conn_curs()
+    cursor.execute(query)
+    result = cursor.fetchall()
+    cursor.close()
+    conn.close()
+    return result
+
+fetch_query_records("""SELECT bridge_name from cleaneddata_table LIMIT 5;""")
+```
+Results:
+[('Bukinga',),
+ ('Kagarama',),
+ ('Karambi',),
+ ('Rugeti',),
+ ('Nyakabuye - Nkomane',)]
+
+The API gives us access to database for web development by providing the JSON data.
 
 #### Create databas hosted in AWS
 Go to the RDS service. Click the `Create database` button. Select the following options:
@@ -223,6 +312,10 @@ cursor.execute(query)
 result = cursor.fetchall()
 conn.close
 
+
+
+
+
 ### FastAPI app
 Save your .env file in the following location: project/app/api/.env  and run the app locally from repo directory: `docker-compose up`, which will run `uvicorn app.main:app --reload` in the container. You can open it in browser at `localhost:80`.
 
@@ -274,17 +367,27 @@ Follow these instructions to deploy the first time. 🚀
 2. install gunicorn
 3. install typing-extensions (a dependency needed on Python 3.7, which is the version Elastic Beanstalk is still using)
 4. build the docker image or pipenv install the above in an activated env
-5. git add --all
-6. git commit -m "Your commit message"
-7. in pipenv: `eb init --platform python-3.7 --region us-east-1 CHOOSE-YOUR-NAME` (Instead of using `Docker` as the platform, use Python 3.7. AWS will look for either a `requirements.txt` or `Pipfile.lock` or `Pipfile` to install your dependencies, in that order. You should have both a `Pipfile.lock` and `Pipfile` in your repo.). If you are using docker image: `eb init --platform docker --region us-east-1 CHOOSE-YOUR-NAME`
-8. eb create --region us-east-1 CHOOSE-YOUR-NAME
+5. `git add --all`
+6. `git commit -m "Your commit message"`
+7. `eb init --platform docker make-up-your-app-name --region us-east-1`. 
+  - in pipenv: `eb init --platform python-3.7 --region us-east-1 CHOOSE-YOUR-NAME` (Instead of using `docker` as the platform, use Python 3.7. AWS will look for either a `requirements.txt` or `Pipfile.lock` or `Pipfile` to install your dependencies, in that order. You should have both a `Pipfile.lock` and `Pipfile` in your repo.). 
+8. `eb create make-up-your-app-name`
 9. If your app uses environment variables, set them in the [Elastic Beanstalk console](https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/environments-cfg-softwaresettings.html#environments-cfg-softwaresettings-console)
-10. eb open
-11. Check your logs in the [Elastic Beanstalk console](https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/using-features.logging.html), to see any error messages
+10. `eb open`
+11. Check your logs in the [Elastic Beanstalk console](https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/using-features.logging.html), to see any error messages. When your application is deployed to Elastic Beanstalk, you'll get an automatically generated URL that you can use to connect to your API.
 
 Reference docs: 
 https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/create-deploy-python-apps.html
 https://fastapi.tiangolo.com/deployment/manually/
+
+#### AWS Route 53
+Route 53 is Amazon's [Domain Name System (DNS)](https://simple.wikipedia.org/wiki/Domain_Name_System) web service.
+Follow the [instructions](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/resource-record-sets-creating.html#resource-record-sets-elb-dns-name-procedure) to configure a domain name with HTTPS for the DS API.
+
+The way it works is, When a machine (or human) wants to connect to your API, they first need to find the IP address of the endpoint where your API is hosted.
+This is step one, where the caller (aka client) asks the name servers in your hosted zone to translate your domain name (e.g. c-ds.ecosoap.dev) to a proper IP address.
+Once the client has the IP address, it will connect to your API, which is hosted in your Elastic Beanstalk environment. We've made this connection secure by adding an SSL certificate to the load balancer and enabling HTTPS. The client will then send encrypted traffic over the internet to the loadbalancer attached to the API. Then, the load balancer sends the traffic to the actual API instances, running on servers or in containers. Since the load balancer and api application instance are on the same private network (not on the internet) we don't need to keep the traffic encrypted between them, which adds cost and reduces performance.
+The traffic is decrypted by the load-balancer and sent to the application as unencrypted HTTP traffic on port 80.
 
 #### Clean up AWS
 If not needed delete all application versions and terminate the environment to avoid extra cost. Link to [doc](https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/GettingStarted.Cleanup.html)
