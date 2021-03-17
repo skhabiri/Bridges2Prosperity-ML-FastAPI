@@ -106,8 +106,9 @@ enter http://0.0.0.0:80 in web browser to launch the API locally
 
 
 # AWS
-AWS is a cloud platform that offers various services. SOme the most important one for us:
+AWS is a cloud platform that offers various services. Some of the services are:
 
+### AWS Services:
 #### AWS EC2
 `Amazon Elastic Compute Cloud` (Amazon EC2) is a web service that provides secure, resizable compute capacity in the cloud. It is designed to make web-scale cloud computing easier for developers. Amazon EC2’s simple web service interface allows you to obtain and configure capacity with minimal friction. This is like virtual private servers.
 
