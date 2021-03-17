@@ -158,11 +158,49 @@ Make sure to choose us-east-1 region, and create a IAM user for the app instead 
 use `aws configure` to enter the credentials. Those data are saved in `~/.aws/credentials` and `~/.aws/config`.
 
 #### Create security group
-In EC2 service create a `security group`. This will be use when creating the database. In the `Inbound rules` section, click the `Add rule` button. For `Type`, select `PostgreSQL`. For `Source`, select `Anywhere`.
+In EC2 service create a `security group`. This will be use when creating the database. In the `Inbound rules` section, click the `Add rule` button. For `Type`, select `PostgreSQL`. For `Source`, select `Anywhere`. Do the same for the Outbound.
+
+### SQLAlchemy engine, connection, and session
+**Engine** is the lowest level object used by SQLAlchemy. It [maintains a pool of connections](http://docs.sqlalchemy.org/en/latest/core/pooling.html) available for use whenever the application needs to talk to the database. .execute() is a convenience method that first calls `conn = engine.connect(close_with_result=True)` and then `conn.execute()`. The `close_with_result` parameter means the connection is closed automatically.
+
+**Connection** is (as we saw above) the thing that actually does the work of executing a SQL query. You should do this whenever you want greater control over attributes of the connection, when it gets closed, etc. For example, a very import example of this is a Transaction, which lets you decide when to commit your changes to the database. In normal use, changes are autocommitted. With the use of transactions, you could (for example) run several different SQL statements and if something goes wrong with one of them you could undo all the changes at once.
+```
+connection = engine.connect()
+trans = connection.begin()
+try:
+    connection.execute("INSERT INTO films VALUES ('Comedy', '82 minutes');")
+    connection.execute("INSERT INTO datalog VALUES ('added a comedy');")
+    trans.commit()
+except:
+    trans.rollback()
+    raise
+```
+**Sessions** are used for the Object Relationship Management (ORM) aspect of SQLAlchemy (in fact you can see this from how they're imported: `from sqlalchemy.orm import sessionmaker)`. They use connections and transactions under the hood to run their automatically-generated SQL statements. `.execute()` is a convenience function that passes through to whatever the session is bound to (usually an engine, but can be a connection).
+If you're using the ORM functionality, use session; if you're only doing straight SQL queries not bound to objects, you're probably better off using connections directly.
 
 ### AWS RDS Postgres
 In order to have access to the dataset while connecting to data science API, We create a PostgreSQL database instance in Amazon RDS. Here you can find instruction for [creating a PostgreSQL DB Instance](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/CHAP_GettingStarted.CreatingConnecting.PostgreSQL.html#CHAP_GettingStarted.Creating.PostgreSQL).
-After DB instance is created, you can use any standard SQL client application such as [pgAdmin](https://www.pgadmin.org/) to connect to the database instance. You can download and use pgAdmin without having a local instance of PostgreSQL on your client computer. Using the database client (`pgAdmin4`) we create a database in RDS cloud and connect to it from client computer through `psycopg2` a python library for PostgreSQL.
+
+#### Create databass hosted in AWS
+Go to the RDS service. Click the `Create database` button. Select the following options:
+* Database creation method = Standard create
+* Engine type = PostgreSQL
+* Template = Free tier
+* DB instance identifier = mydbinst
+* Master username = mypostgres
+* Master password = you make up a password
+Scroll down to the `Connectivity` section, and select the following options:
+* Public access = Yes
+* VPC security group = Choose existing
+* Existing security group = the security group you just created
+Then scroll down and click the `Create database` button. After successful creation Click the `View credential details` button. You'll see your master username, master password, & endpoint url. Keep track of these.
+
+In your real app, use environment variables to hide the credentials from public. When developing locally,  you can use python-dotenv to load a .env file. (The .env file is listed in .gitignore)  When you deploy, use the Elastic Beanstalk console for the [configuring environment variables](https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/environments-cfg-softwaresettings.html#environments-cfg-softwaresettings-console) there.
+
+#### Connect to AWS DB instance
+After DB instance is created, you can use any standard SQL client application such as [pgAdmin](https://www.pgadmin.org/) to connect to the database instance. You can download and use pgAdmin without having a local instance of PostgreSQL on your client computer. `pgAdmin4` as a database client create a server connection to the RDS DB instance and we can use the pgAdmin gui to create multiple database in RDS DB Instance. 
+
+We can connect to the created database from any Python notebook, shell, or script, in any environment (by `sqlalchemy` or `psycopg2`). 
 
 Here is a snippet of the code in Jupyter Notebook.
 ```
@@ -185,7 +223,7 @@ import sqlalchemy
 from sqlalchemy.ext.declarative import declarative_base
 import logging
 ```
-Loading .env file with database credentials
+Loading .env file with database credentials for local host
 ```
 file_path = os.path.abspath('$APP_DIR')
 load_dotenv(os.path.join(file_path, '.env'))
@@ -196,12 +234,14 @@ db_password = os.getenv("DB_PASSWORD")
 db_host = os.getenv("DB_HOST")
 db_port = os.getenv("DB_PORT")
 ```
-Connect to database
+#### Connecting to the db by `sqlalchemy`:
+In sqlalchemy we create an engine attached to the db and connect to it by:
 ```
+# default PostgreSQL port is 5432
 engine = sqlalchemy.create_engine(f"postgresql://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}")
 con = engine.connect()
 ```
-Upload the data into database tables
+Create tables in the database and insert data into them. It's autocommit here.
 ```
 dfp = pd.read_csv("../Data/predict_df.csv")
 df = pd.read_csv("../Data/main_data_clean.csv")
@@ -209,7 +249,33 @@ df.to_sql('cleaneddata_table', con, if_exists='replace')
 dfp.to_sql('model_table', con, if_exists='replace')
 con.close()
 ```
-Let's make a query to validate the data in created tables
+*global variable in python:*
+*Python assumes that any name that is assigned to, anywhere within a `function`, is `local` to that function unless explicitly told otherwise. If it is only **reading** from a name, and the name doesn't exist locally, it will try to look up the name in any containing scopes.*
+```
+# sample.py
+myGlobal = 5
+
+def func_loc():
+    """ by default function variables are local"""
+    myGlobal = "local_func"
+    print(myGlobal)
+    
+def func_glob():
+    """ by default function variables are local"""
+    global myGlobal
+    myGlobal = "global_func"
+
+def func_read():
+    print(myGlobal)
+
+func_loc()  # prints: "local_func" and discards local variable upon exit
+func_read() # prints: 5 as myGlobal is not found in local scope
+func_glob() # updates myGlobal in global scope
+func_read() # prints: "global_func" as myGlobal is not found in local scope
+```
+Let's make a query to validate the data
+
+#### Connecting to the db by `psycopg2
 ```
 def conn_curs():
     """
@@ -243,75 +309,8 @@ Results:
  ('Rugeti',),
  ('Nyakabuye - Nkomane',)]
 
-The API gives us access to database for web development by providing the JSON data.
-
-#### Create databas hosted in AWS
-Go to the RDS service. Click the `Create database` button. Select the following options:
-* Database creation method = Standard create
-* Engine type = PostgreSQL
-* Template = Free tier
-* DB instance identifier = you make up a name
-* Master username = make up a name
-* Master password = you make up a password
-Scroll down to the `Connectivity` section, and select the following options:
-* Public access = Yes
-* VPC security group = Choose existing
-* Existing security group = the security group you just created
-Then scroll down and click the `Create database` button. After successful creation Click the `View credential details` button. You'll see your master username, master password, & endpoint. Keep track of these.
-
-Don't share your passwords with the world. In your real app, use environment variables. When developing locally,  you can use python-dotenv to load a .env file. (The .env file is listed in .gitignore)  When you deploy, use the Elastic Beanstalk console for the [configuring environment variables](https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/environments-cfg-softwaresettings.html#environments-cfg-softwaresettings-console) there.
-
-#### Test database
-You can test it using code like this, from any Python notebook, shell, or script, in any environment (where sqlalchemy is installed). 
-```
-import sqlalchemy
-
-# Replace username, password, & blah.blah.blah
-database_url = 'postgresql://username:password@blah.blah.blah.us-east-1.rds.amazonaws.com/postgres'
-
-engine = sqlalchemy.create_engine(database_url)
-connection = engine.connect()
-```
-You know you’ve done it correctly if this code runs without error. 🎉 you can also connect by `pgadmin` or `datagrip`.
-
-Or we can connect with psycopg2:
-```python
-import psycopg2
-
-def conn_curs():
-    """
-    makes a connection to the database
-    """
-    global db_name
-    global db_user
-    global db_password
-    global db_host
-    global db_port
-
-    connection = psycopg2.connect(dbname=db_name, user= db_user,
-                                  password=db_password, host= db_host,port=db_port)
-    cursor = connection.cursor()
-    return connection, cursor
-```
-
-Let's see how to work with our database.
-#### How to upload Data to DataBase
-- Convert CSV/Excel into DataFrame format : 
-```python 
-df = pd.read("file_location")
-```
-- Upload DataFrame to SQL Table
-```python   
-con, c = conn_curs()
-table_name = 'table_name'
-df.to_sql(table_name, con)
-```
-- Test Queries to Table B2P_oct_2018
-query  = """SELECT "Bridge_Name" from public."B2P_oct_2018" where "Bridge_Name" = 'Bukinga' LIMIT 1;"""
-cursor.execute(query)
-result = cursor.fetchall()
-conn.close
-
+you can also connect by `pgadmin` or `datagrip`.
+The API gives us access to database for web development by providing JSON data.
 
 ## Building The App
 As a part of data science team the task is to train the model, deploy model in the cloud, and integrate machine learning into web product, using this tech stack:
