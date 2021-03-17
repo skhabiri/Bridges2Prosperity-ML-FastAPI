@@ -288,3 +288,55 @@ https://fastapi.tiangolo.com/deployment/manually/
 
 #### Clean up AWS
 If not needed delete all application versions and terminate the environment to avoid extra cost. Link to [doc](https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/GettingStarted.Cleanup.html)
+
+
+#### Deploying the machine learning model
+Data science can deploy machine learning models through API endpoints. When clients make requests to your API endpoints, the inputs might not be valid. That means 
+Garbage in, garbage out". So we'll create a [data class](https://docs.python.org/3/library/dataclasses.html) with [type annotations](https://docs.python.org/3/library/typing.html) to define what attributes we expect our input to have. We'll use [Pydantic](https://pydantic-docs.helpmanual.io/), a data validation library integrated with FastAPI.
+To learn more, see these docs:
+* [Pydantic docs > Field types](https://pydantic-docs.helpmanual.io/usage/types/)
+* [Pydantic docs > Validators](https://pydantic-docs.helpmanual.io/usage/validators/)
+
+
+For example let's create a API endpoint for a machine learning model that predict rent. The input to the model is # of beds and baths. Then the endpoint should accept POST requests, not GET requests.
+```
+@router.post('/predict_rent')
+async def rent(beds, baths):
+```
+More info:
+- [FastAPI docs > Tutorial - User Guide > Request Body](https://fastapi.tiangolo.com/tutorial/body/)
+- [FastAPI docs > Python Types Intro ](https://fastapi.tiangolo.com/python-types/)
+- [FastAPI docs > Concurrency and async / await](https://fastapi.tiangolo.com/async/)
+- [RealPython.com Primer on Python Decorators](https://realpython.com/primer-on-python-decorators/)
+
+Now let's use a scikit-learn model. We want to save the a trained model so you can use it without retraining. This is sometimes called "pickling."  See [scikit-learn docs on "model persistence"](https://scikit-learn.org/stable/modules/model_persistence.html) & [Keras docs on "serialization and saving."](https://keras.io/guides/serialization_and_saving/)
+```
+import joblib
+joblib.dump(model, 'model.joblib', compress=True)
+```
+If you're using a Colab notebook, you'll need to download the file using code like this:
+```
+from google.colab import files
+files.download('model.joblib')
+```
+You also need to get the exact version numbers of all libraries used in your saved model. For example, you can run code like this:
+```
+import joblib
+import sklearn
+print(f'joblib=={joblib.__version__}')
+print(f'scikit-learn=={sklearn.__version__}')
+```
+Install your dependencies into your virtual environment, with exact version numbers. For example:
+```
+pipenv install joblib==1.0.0 scikit-learn==0.22.2.post1
+```
+Add these lines of code to your app/ml.py file.
+```
+import joblib
+model = joblib.load('app/model.joblib')
+```
+Launch your FastAPI app and see if your code works.
+```
+pipenv shell
+uvicorn app.main:app --reload
+```
