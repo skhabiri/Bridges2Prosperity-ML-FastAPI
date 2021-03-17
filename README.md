@@ -29,7 +29,7 @@ global git configuration is in `~/.gitconfig` and the project config is set in `
 git config user.email <user_email>
 git config user.name <git_username>
 ```
-# Virtual Environment:
+## Virtual Environment:
 We can either use `pipenv` or `docker` to reproduce the environment.
 
 ### pipenv
@@ -104,8 +104,7 @@ Now we can locally launch the web service in docker container with `docker-compo
 
 enter http://0.0.0.0:80 in web browser to launch the API locally
 
-
-# AWS
+## AWS
 AWS is a cloud platform that offers various services.
 
 ### Cloud Services
@@ -134,8 +133,17 @@ Amazon S3 provides the following key features:
 - Each object is stored in a bucket and retrieved via a unique, developer-assigned key.
 - A bucket can be stored in one of several Regions. You can choose a Region to optimize for latency, minimize costs, or address regulatory requirements.
 
-#### Route53
-To set up the DNS records for a domain.
+#### AWS Route 53
+Route 53 is Amazon's [Domain Name System (DNS)](https://simple.wikipedia.org/wiki/Domain_Name_System) web service, to set up the DNS records for a domain.
+
+Follow the [instructions](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/resource-record-sets-creating.html#resource-record-sets-elb-dns-name-procedure) to configure a domain name with HTTPS for the DS API.
+
+The way it works is, When a machine (or human) wants to connect to your API, they first need to find the IP address of the endpoint where your API is hosted.
+This is step one, where the caller (aka client) asks the name servers in your hosted zone to translate your domain name (e.g. c-ds.ecosoap.dev) to a proper IP address.
+Once the client has the IP address, it will connect to your API, which is hosted in your Elastic Beanstalk environment. We've made this connection secure by adding an SSL certificate to the load balancer and enabling HTTPS. The client will then send encrypted traffic over the internet to the loadbalancer attached to the API. Then, the load balancer sends the traffic to the actual API instances, running on servers or in containers. Since the load balancer and api application instance are on the same private network (not on the internet) we don't need to keep the traffic encrypted between them, which adds cost and reduces performance.
+The traffic is decrypted by the load-balancer and sent to the application as unencrypted HTTP traffic on port 80.
+
+### Setup AWS interface on the local host
 
 #### Install AWS CLI (Command Line Interface):
 Install the aws cli from [here](https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2-mac.html). Check that the aws cli is installed by `which aws`.
@@ -149,17 +157,8 @@ Make sure to choose us-east-1 region, and create a IAM user for the app instead 
 #### Configure AWS CLI
 use `aws configure` to enter the credentials. Those data are saved in `~/.aws/credentials` and `~/.aws/config`.
 
-#### Building:
-As a part of data science team the task is to train the model, deploy model in the cloud, and integrate machine learning into web product, using this tech stack:
-* FastAPI: Web framework. Like Flask, but faster, with automatic interactive docs.
-* AWS RDS Postgres: Relational database service. Like ElephantSQL.
-* AWS Elastic Beanstalk: Platform as a service, hosts your API. Like Heroku.
-* Docker: Containers, for reproducibility. Like virtual environments, but more reproducible.
-
-
 #### Create security group
 In EC2 service create a `security group`. This will be use when creating the database. In the `Inbound rules` section, click the `Add rule` button. For `Type`, select `PostgreSQL`. For `Source`, select `Anywhere`.
-
 
 ### AWS RDS Postgres
 In order to have access to the dataset while connecting to data science API, We create a PostgreSQL database instance in Amazon RDS. Here you can find instruction for [creating a PostgreSQL DB Instance](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/CHAP_GettingStarted.CreatingConnecting.PostgreSQL.html#CHAP_GettingStarted.Creating.PostgreSQL).
@@ -314,7 +313,12 @@ result = cursor.fetchall()
 conn.close
 
 
-
+## Building The App
+As a part of data science team the task is to train the model, deploy model in the cloud, and integrate machine learning into web product, using this tech stack:
+* FastAPI: Web framework. Like Flask, but faster, with automatic interactive docs.
+* AWS RDS Postgres: Relational database service. Like ElephantSQL.
+* AWS Elastic Beanstalk: Platform as a service, hosts your API. Like Heroku.
+* Docker: Containers, for reproducibility. Like virtual environments, but more reproducible.
 
 
 ### FastAPI app
@@ -361,40 +365,8 @@ Links for more on FastAPI:
 * [Implementing FastAPI Services – Abstraction and Separation of Concerns](https://camillovisini.com/article/abstracting-fastapi-services/)
 * [testdriven.io — FastAPI blog posts](https://testdriven.io/blog/topics/fastapi/)
 
-#### Deploy the FastAPI app to AWS Elastic Beanstalk
-Follow these instructions to deploy the first time. 🚀
 
-1. If you are not using docker and `Dockerfile` then you need to create a `Procfile`, with this line: `web: gunicorn app.main:app -w 4 -k uvicorn.workers.UvicornWorker` (Like on Heroku, the Procfile tells AWS what command to run. We’ve had better luck in the past using gunicorn instead of uvicorn with the Python platform on AWS Elastic Beanstalk.)
-2. install gunicorn
-3. install typing-extensions (a dependency needed on Python 3.7, which is the version Elastic Beanstalk is still using)
-4. build the docker image or pipenv install the above in an activated env
-5. `git add --all`
-6. `git commit -m "Your commit message"`
-7. `eb init --platform docker make-up-your-app-name --region us-east-1`. 
-  - in pipenv: `eb init --platform python-3.7 --region us-east-1 CHOOSE-YOUR-NAME` (Instead of using `docker` as the platform, use Python 3.7. AWS will look for either a `requirements.txt` or `Pipfile.lock` or `Pipfile` to install your dependencies, in that order. You should have both a `Pipfile.lock` and `Pipfile` in your repo.). 
-8. `eb create make-up-your-app-name`
-9. If your app uses environment variables, set them in the [Elastic Beanstalk console](https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/environments-cfg-softwaresettings.html#environments-cfg-softwaresettings-console)
-10. `eb open`
-11. Check your logs in the [Elastic Beanstalk console](https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/using-features.logging.html), to see any error messages. When your application is deployed to Elastic Beanstalk, you'll get an automatically generated URL that you can use to connect to your API.
-
-Reference docs: 
-https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/create-deploy-python-apps.html
-https://fastapi.tiangolo.com/deployment/manually/
-
-#### AWS Route 53
-Route 53 is Amazon's [Domain Name System (DNS)](https://simple.wikipedia.org/wiki/Domain_Name_System) web service.
-Follow the [instructions](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/resource-record-sets-creating.html#resource-record-sets-elb-dns-name-procedure) to configure a domain name with HTTPS for the DS API.
-
-The way it works is, When a machine (or human) wants to connect to your API, they first need to find the IP address of the endpoint where your API is hosted.
-This is step one, where the caller (aka client) asks the name servers in your hosted zone to translate your domain name (e.g. c-ds.ecosoap.dev) to a proper IP address.
-Once the client has the IP address, it will connect to your API, which is hosted in your Elastic Beanstalk environment. We've made this connection secure by adding an SSL certificate to the load balancer and enabling HTTPS. The client will then send encrypted traffic over the internet to the loadbalancer attached to the API. Then, the load balancer sends the traffic to the actual API instances, running on servers or in containers. Since the load balancer and api application instance are on the same private network (not on the internet) we don't need to keep the traffic encrypted between them, which adds cost and reduces performance.
-The traffic is decrypted by the load-balancer and sent to the application as unencrypted HTTP traffic on port 80.
-
-#### Clean up AWS
-If not needed delete all application versions and terminate the environment to avoid extra cost. Link to [doc](https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/GettingStarted.Cleanup.html)
-
-
-#### Deploying the machine learning model
+### Deploying the machine learning model
 Data science can deploy machine learning models through API endpoints. When clients make requests to your API endpoints, the inputs might not be valid. That means 
 Garbage in, garbage out". So we'll create a [data class](https://docs.python.org/3/library/dataclasses.html) with [type annotations](https://docs.python.org/3/library/typing.html) to define what attributes we expect our input to have. We'll use [Pydantic](https://pydantic-docs.helpmanual.io/), a data validation library integrated with FastAPI.
 To learn more, see these docs:
@@ -444,3 +416,27 @@ Launch your FastAPI app and see if your code works.
 pipenv shell
 uvicorn app.main:app --reload
 ```
+
+## Deploy the FastAPI app to AWS Elastic Beanstalk
+Follow these instructions to deploy the first time. 🚀
+
+1. If you are not using docker and `Dockerfile` then you need to create a `Procfile`, with this line: `web: gunicorn app.main:app -w 4 -k uvicorn.workers.UvicornWorker` (Like on Heroku, the Procfile tells AWS what command to run. We’ve had better luck in the past using gunicorn instead of uvicorn with the Python platform on AWS Elastic Beanstalk.)
+2. install gunicorn
+3. install typing-extensions (a dependency needed on Python 3.7, which is the version Elastic Beanstalk is still using)
+4. build the docker image or pipenv install the above in an activated env
+5. `git add --all`
+6. `git commit -m "Your commit message"`
+7. `eb init --platform docker make-up-your-app-name --region us-east-1`. 
+  - in pipenv: `eb init --platform python-3.7 --region us-east-1 CHOOSE-YOUR-NAME` (Instead of using `docker` as the platform, use Python 3.7. AWS will look for either a `requirements.txt` or `Pipfile.lock` or `Pipfile` to install your dependencies, in that order. You should have both a `Pipfile.lock` and `Pipfile` in your repo.). 
+8. `eb create make-up-your-app-name`
+9. If your app uses environment variables, set them in the [Elastic Beanstalk console](https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/environments-cfg-softwaresettings.html#environments-cfg-softwaresettings-console)
+10. `eb open`
+11. Check your logs in the [Elastic Beanstalk console](https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/using-features.logging.html), to see any error messages. When your application is deployed to Elastic Beanstalk, you'll get an automatically generated URL that you can use to connect to your API.
+
+Reference docs: 
+https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/create-deploy-python-apps.html
+https://fastapi.tiangolo.com/deployment/manually/
+
+
+## Clean up AWS
+If not needed delete all application versions and terminate the environment to avoid extra cost. Link to [doc](https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/GettingStarted.Cleanup.html)
