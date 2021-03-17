@@ -69,7 +69,7 @@ COPY . .
 docker-compose allows to have a container composed of multiple services. We use docker-compose.yml to define the services, entry point command, volume and network port mapping from the docker host to the container.
 
 #### docker-compose.yml 
-The Compose file is a YAML file defining services such as web and volumes and networks for a Docker application.
+The Compose file defines services such as web and volumes and networks for a Docker application.
 ```
 version: '3.7'
 services:
