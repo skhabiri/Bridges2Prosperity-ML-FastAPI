@@ -22,6 +22,6 @@ RUN pip install -r ./requirements.txt
 
 # copy everything from docker host (path is relative to "context") dir of the 
 # service that calls this Dockerfile to the WORKDIR image
-#COPY . .
-#COPY ../Data/ /usr/src/b2p/Data/
+COPY . .
+COPY ../Data/ /usr/src/b2p/Data/
 
