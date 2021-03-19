@@ -1,40 +1,13 @@
-
-## Model 
-The model being used in the deployment is a random forest model supported with Synthetic Minority Oversampling Technique (SMOTE).
- - The [latest deployment](https://lab28dsk.bridgestoprosperity.dev/) is based on this [google colabs notebook](https://colab.research.google.com/github/Lambda-School-Labs/bridges-to-prosperity-ds-d/blob/main/notebooks/b2p_d.ipynb)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 # Bridges to Prosperity
 [Bridges to Prosperity (B2P)](https://www.bridgestoprosperity.org) footbridges works with isolated communities to create access to essential health care, education and economic opportunities by building footbridges over impassable rivers.
 
 ## Dataset
 The main dataset is [B2P Dataset_2020.10.xlsx](https://github.com/skhabiri/bridges-to-prosperity-b2p/raw/main/Data/B2P%20Dataset_2020.10.xlsx). It consists of survey data of 1472 sites (rows) with 44 features. The “Stage” column shows the status of the project. The “senior_engineering_review” shows if the site has been reviewed by engineering team or not. Among all the rows of the dataset only 65 projects are reviewed and approved and 24 projects are reviewed and rejected. The rest (1383 rows) do not have any target label. [b2p_main_sk.ipynb](https://github.com/skhabiri/bridges-to-prosperity-b2p/blob/main/notebooks/b2p_main_sk.ipynb) is used to clean up the data to `df` dataframe and downloaded to [main_data_clean.csv](https://github.com/skhabiri/bridges-to-prosperity-b2p/raw/main/notebooks/main_data_clean.csv). Additionally, a similar dataset [B2P_World_Dataset_2020.01.14.xls](https://github.com/skhabiri/bridges-to-prosperity-b2p/raw/main/Data/B2P_World_Dataset_2020.01.14.xls) is loaded from https://data.world/ and merged with the main dataset in an attempt to extend the training data. 
 
-## Objective:
-As mentioned in Dataset section, a number of sites have been reviewed by the  senior engineering team and the projects have been either accepted or rejected to continue. Reviewing the sites by the engineering team is a time onsuming project and we like to hand over to engineering team only the projects that have a goo chane of being accepted to save cost. Hene despite a very unbalance nature and number of samples we like to make a prediction on the engineering review final decision about the projects. We process the target label into three main classes as `Unknown`, `negative`, `positive`.
+## Project objective and challenge
+As mentioned in Dataset section, a number of sites have been reviewed by the  senior engineering team and the projects have been either accepted or rejected to continue. Based on the existing input data we want to know if we can classify the sites as being rejected or not in any future review conducted by senior engineering team. In other words we want to find out which sites will be technically rejected in future engineering reviews.
+
+Hene despite a very unbalance nature and number of samples we like to make a prediction on the engineering review final decision about the projects. We process the target label into three main classes as `Unknown`, `negative`, `positive`.
   ```python
   def process_target(df):
   data = df.copy()
@@ -56,11 +29,7 @@ As mentioned in Dataset section, a number of sites have been reviewed by the  se
 
   # Unknown:
   unknown = data['senior_engineering_review_conducted'].isna()
-``
-
-
-## Project Challenge
-Based on the existing input data we want to know if we can classify the sites as being rejected or not in any future review conducted by senior engineering team. In other words we want to find out which sites will be technically rejected in future engineering reviews.
+```
 
 # Setting up the Project:
 First clone the repository to your local machine
@@ -86,7 +55,6 @@ In this project instead of pipenv we use Docker Compose to run our app in an iso
 ### Docker
 For building a docker image we need Dockerfile which specifies: the base python to use, working directory on the image volume, all the package dependencies, and the files (web app) that needs to be copied from the host container to the image.
 In this approach we build an image based on a python version and packagees specified in requirements.txt. We also map the local volume to the container volume that will be created based on this image. Additionally using docker-compose would allow us to run some services such as web server inside the container. For that we would need to define the networking ports, volume mapping and point of entry command to run.
-
 
 ## Architecture
 The block diagram below shows different sections of the project.
@@ -174,6 +142,7 @@ Once the client has the IP address, it will connect to your API, which is hosted
 The traffic is decrypted by the load-balancer and sent to the application as unencrypted HTTP traffic on port 80.
 
 <img src="https://github.com/skhabiri/bridges-to-prosperity-b2p/raw/main/assets/SSL_aws.png" width="600" />
+
 ____
 ## Building The App
 As a part of data science team the task is to train the model, deploy model in the cloud, and integrate machine learning into web product. The following tech stack is used:
@@ -351,7 +320,6 @@ Results:
 you can also connect by `pgadmin` or `datagrip`.
 The API gives us access to database for web development by providing JSON data.
 
-
 ### FastAPI app
 An example on how to create an endpoint route for GET and POST requests.
 
@@ -411,6 +379,16 @@ You can read about concurency and async keyword [here](https://fastapi.tiangolo.
 * [FastAPI docs > Python Types Intro ](https://fastapi.tiangolo.com/python-types/)
 * [FastAPI docs > Concurrency and async / await](https://fastapi.tiangolo.com/async/)
 * [RealPython.com Primer on Python Decorators](https://realpython.com/primer-on-python-decorators/)
+
+
+
+### Machine learning model 
+The model being used in the deployment is a random forest model supported with Synthetic Minority Oversampling Technique (SMOTE).
+
+
+
+
+
 
 #### Model serialization
 Now let's use a scikit-learn model. We want to save the a trained model so you can use it without retraining. This is sometimes called "pickling."  See [scikit-learn docs on "model persistence"](https://scikit-learn.org/stable/modules/model_persistence.html) & [Keras docs on "serialization and saving."](https://keras.io/guides/serialization_and_saving/)
