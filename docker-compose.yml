@@ -28,7 +28,7 @@ services:
             - 80:8000
 
     
-    ipynotebook:
+##    ipynotebook:
     
 ##        image: b2p/notebook
         
