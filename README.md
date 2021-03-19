@@ -38,7 +38,47 @@ In this approach we build an image based on a python version and packagees speci
 The block diagram below shows different sections of the project.
 <img src="https://github.com/skhabiri/bridges-to-prosperity-b2p/raw/main/assets/b2p_diagram.png">
 
-
+## File structure
+```bash
+bridges-to-prosperity-b2p
+├── .ebignore
+├── .elasticbeanstalk
+│   └── config.yml
+├── Data
+│   ├── B2P\ Dataset_2020.10.xlsx
+├── LICENSE
+├── README.md
+├── docker-compose.yml
+├── notebooks
+│   ├── Dockerfile
+│   ├── README.md
+│   ├── b2p_db_sk.ipynb
+│   ├── b2p_main_sk.ipynb
+│   ├── gs_model
+│   ├── main_data_clean.csv
+│   ├── predict_df.csv
+│   └── requirements.txt
+├── project
+│   ├── .elasticbeanstalk
+│   │   └── config.yml
+│   ├── Dockerfile
+│   ├── app
+│   │   ├── __init__.py
+│   │   ├── api
+│   │   │   ├── .env
+│   │   │   ├── __init__.py
+│   │   │   ├── dbpgsql.py
+│   │   │   ├── gs_model
+│   │   │   ├── predict.py
+│   │   │   └── viz.py
+│   │   ├── main.py
+│   │   └── tests
+│   │       ├── __init__.py
+│   │       ├── test_main.py
+│   │       ├── test_predict.py
+│   │       └── test_viz.py
+│   └── requirements.txt
+```
 
 ## AWS
 AWS is a cloud platform that offers various services.
@@ -79,6 +119,7 @@ This is step one, where the caller (aka client) asks the name servers in your ho
 Once the client has the IP address, it will connect to your API, which is hosted in your Elastic Beanstalk environment. We've made this connection secure by adding an SSL certificate to the load balancer and enabling HTTPS. The client will then send encrypted traffic over the internet to the loadbalancer attached to the API. Then, the load balancer sends the traffic to the actual API instances, running on servers or in containers. Since the load balancer and api application instance are on the same private network (not on the internet) we don't need to keep the traffic encrypted between them, which adds cost and reduces performance.
 The traffic is decrypted by the load-balancer and sent to the application as unencrypted HTTP traffic on port 80.
 
+<img src="https://github.com/skhabiri/bridges-to-prosperity-b2p/raw/main/assets/SSL_aws.png" width="200" />
 ____
 ## Building The App
 As a part of data science team the task is to train the model, deploy model in the cloud, and integrate machine learning into web product. The following tech stack is used:
@@ -373,8 +414,10 @@ A Docker container, as discussed above, wraps an application’s software into a
 #### Union File Systems
 Docker uses Union File Systems to build up an image. You can think of a Union File System as a stackable file system, meaning files and directories of separate file systems (known as branches) can be transparently overlaid to form a single file system. The images are read-only and the containers are writable.
 
-<docker_layers.png>
-<volumes_in_docker.png>
+<p float="left">
+  <img src="https://github.com/skhabiri/bridges-to-prosperity-b2p/raw/main/assets/docker_layers.png" width="200" />
+  <img src="https://github.com/skhabiri/bridges-to-prosperity-b2p/raw/main/assets/volumes_in_docker.png" width="200" /> 
+</p>
 
 #### Volumes
 Volumes are the **data** part of a container, initialized when a container is created. Volumes allow you to persist and share a container’s data. Data volumes are separate from the default Union File System and exist as normal directories and files on the **host** filesystem. So, even if you destroy, update, or rebuild your container, the data volumes will remain untouched. When you want to update a volume, you make changes to it directly in the container. Basically when we run a container let's say for an app and generate some data, the data is going to be lost once we exit the docker environment. This is the property of the containers that are disposable. If we ever needed to persist the collected data, we could define a volume that would basically maps a local host directory to a path relative to working directory in the container. This would allow to directly write to the volume from the container and have the data persist even after we exit the container.
@@ -406,16 +449,60 @@ When creating the container, Docker creates a network interface so that the cont
 #### Dockerfile
 A Dockerfile is where you write the instructions to build a Docker image. RUN is an image build step, the state of the container after a RUN command will be committed to the container image. A Dockerfile can have many RUN steps that layer on top of one another to build the image.
 
+This Dockerfile is used to create "apiwebapp" service image, which is defined in docker-compose.yml
+```
+# pull official base image, python:3.8-slim-buster from docker-hub
+FROM python:3.8-slim-buster
+
+# set the working directory in container to /usr/src/b2p/project
+# "/usr/src/" is for container. "/b2p/project" name is arbitrary
+WORKDIR /usr/src/b2p/project
+
+# install pip for python3.8 in the custom image
+RUN python -m pip install --upgrade pip
+
+# copy "requirements.txt" from docker host current directory, into the WORKDIR in the container
+# docker host dir is usually where Dockerfile is located. That is specified by a service "context"
+COPY ./requirements.txt .
+
+# install python dependencies
+RUN pip install -r ./requirements.txt
+
+# copy everything from docker host curren directory "./project" to the WORKDIR image
+COPY . .
+```
+This Dockerfile is used to create "ipynotebook" service image, which is defined in "docker-compose.yml"
+```
+# pull base image from "apiwebapp" service docker image 
+# This allows to include all the installed packages 
+# of "apiwebapp" docker image in this container as well
+FROM b2p/fastapi-app
+
+# set the working directory in container to /usr/src/b2p/notebooks
+WORKDIR /usr/src/b2p/notebooks
+
+# install pip for its base python (3.8) in the ipynotebook image
+RUN python -m pip install --upgrade pip
+
+# copy "requirements.txt" from docker host current directory, into the WORKDIR in the container
+# docker host dir is usually where Dockerfile is located. That is specified by a service "context"
+COPY ./requirements.txt .
+
+# install additional requirements
+#RUN pip install jupyterlab
+RUN pip install -r ./requirements.txt
+
+# copy everything from docker host (path is relative to "context") dir of the 
+# service that calls this Dockerfile to the WORKDIR image
+#COPY . .
+#COPY ../Data/ /usr/src/b2p/Data/
+
 ```
 
-```
-
-
-
-
+Compose file allows to define multiple services each with potentially a separate build and docker file and hence defferent container. This is done by dockerp-compose.yml.
 
 #### docker-compose.yml
-Compose file allows to define multiple services each with potentially a separate build and docker file and hence defferent container. We use docker-compose.yml to define the services, entry point command, volume and network port mapping from the docker host to the container. We can define dependency of the services to eachother or in other word the sequence of the services to start up. With `command` We can overwrite the CMD in dockerfiles and define what each service does when starts up. We can designate separate docker file to each service and specifiy its location for building a service image. 
+We use docker-compose.yml to define the services, entry point command, volume and network port mapping from the docker host to the container. We can define dependency of the services to eachother or in other word the sequence of the services to start up. With `command` We can overwrite the CMD in dockerfiles and define what each service does when starts up. We can designate separate docker file to each service and specifiy its location for building a service image. 
 CMD is the command the container executes by default when we launch the built image. A Dockerfile will only use the final CMD defined. The CMD can be overridden when starting a container with docker run $image $other_command.
 
 Here we have two services. One for the web app named `apiwebapp` and the other one named `ipynotebook` is used to launch a teminal and start a jupyter kernel to edit the notebook files. `ipynotebook` service uses `apiwebapp` service image as the base. Hence inherits all the installed packages.
