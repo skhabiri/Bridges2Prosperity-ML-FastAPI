@@ -119,7 +119,7 @@ This is step one, where the caller (aka client) asks the name servers in your ho
 Once the client has the IP address, it will connect to your API, which is hosted in your Elastic Beanstalk environment. We've made this connection secure by adding an SSL certificate to the load balancer and enabling HTTPS. The client will then send encrypted traffic over the internet to the loadbalancer attached to the API. Then, the load balancer sends the traffic to the actual API instances, running on servers or in containers. Since the load balancer and api application instance are on the same private network (not on the internet) we don't need to keep the traffic encrypted between them, which adds cost and reduces performance.
 The traffic is decrypted by the load-balancer and sent to the application as unencrypted HTTP traffic on port 80.
 
-<img src="https://github.com/skhabiri/bridges-to-prosperity-b2p/raw/main/assets/SSL_aws.png" width="200" />
+<img src="https://github.com/skhabiri/bridges-to-prosperity-b2p/raw/main/assets/SSL_aws.png" width="600" />
 ____
 ## Building The App
 As a part of data science team the task is to train the model, deploy model in the cloud, and integrate machine learning into web product. The following tech stack is used:
@@ -414,9 +414,9 @@ A Docker container, as discussed above, wraps an application’s software into a
 #### Union File Systems
 Docker uses Union File Systems to build up an image. You can think of a Union File System as a stackable file system, meaning files and directories of separate file systems (known as branches) can be transparently overlaid to form a single file system. The images are read-only and the containers are writable.
 
-<p float="left">
-  <img src="https://github.com/skhabiri/bridges-to-prosperity-b2p/raw/main/assets/docker_layers.png" width="200" />
-  <img src="https://github.com/skhabiri/bridges-to-prosperity-b2p/raw/main/assets/volumes_in_docker.png" width="200" /> 
+<p align="middle">
+  <img src="https://github.com/skhabiri/bridges-to-prosperity-b2p/raw/main/assets/docker_layers.png" width="400" />
+  <img src="https://github.com/skhabiri/bridges-to-prosperity-b2p/raw/main/assets/volumes_in_docker.png" width="400" /> 
 </p>
 
 #### Volumes
@@ -621,8 +621,6 @@ Follow these instructions to deploy the first time. 🚀
 Reference docs: 
 https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/create-deploy-python-apps.html
 https://fastapi.tiangolo.com/deployment/manually/
-
-[![Welcome Video](https://imgur.com/7gaai5K.png)](https://youtu.be/1qVVODfPtto)
 
 ## Clean up AWS
 If not needed delete all application versions and terminate the environment to avoid extra cost. Link to [doc](https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/GettingStarted.Cleanup.html)
