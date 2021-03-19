@@ -100,7 +100,7 @@ In this approach we build an image based on a python version and packagees speci
 
 ## Architecture
 The block diagram below shows different sections of the project.
-<img src="https://github.com/skhabiri/bridges-to-prosperity-b2p/raw/main/assets/b2p_diagram.png">
+<img src="https://github.com/skhabiri/bridges-to-prosperity-b2p/raw/main/assets/b2p_diagram_update.png">
 
 ## File structure
 ```bash
