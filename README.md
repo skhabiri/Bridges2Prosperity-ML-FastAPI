@@ -382,8 +382,29 @@ You can read about concurency and async keyword [here](https://fastapi.tiangolo.
 
 
 
-### Machine learning model 
-The model being used in the deployment is a random forest model supported with Synthetic Minority Oversampling Technique (SMOTE).
+### Machine learning model
+Looking at the target classes here is the distribution:
+```
+y.value_counts()
+```
+-1.0    1383
+ 1.0      65
+ 0.0      24
+Name: good_site, dtype: int64
+This is a semi-supervised learning as there are a large number of samples with no label. Additionally the labels are imbalanced and there is not sufficient rejected sites to build a reliable model. We use LabelSpreading and Synthetic Minority Oversampling Technique (SMOTE) to help with our imbalance dataset. Target classes are converted into 0 for negative, 1 for positive, and -1 as unknown. This type of assignment works better for label spreading technique.
+
+Here is the pipeline estimator for the model:
+
+```python
+ss_model = make_pipeline_imb(
+    ce.OneHotEncoder(use_cat_names=True, cols=nonnum_features),
+    SimpleImputer(strategy='median'),
+    StandardScaler(),
+    SMOTE(random_state=42),
+    LabelSpreading(kernel='knn', n_neighbors=2)
+    )
+```
+
 
 
 
