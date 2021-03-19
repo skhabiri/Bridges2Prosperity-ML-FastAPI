@@ -831,7 +831,7 @@ Follow these instructions to deploy the first time. 🚀
 5. `git add --all`
 6. `git commit -m "Your commit message"`
 7. `eb init --platform docker your-app-name --region us-east-1`
-  - in pipenv: `eb init --platform python-3.7 --region us-east-1 CHOOSE-YOUR-NAME` (Instead of using `docker` as the platform, use Python 3.7. AWS will look for either a `requirements.txt` or `Pipfile.lock` or `Pipfile` to install your dependencies, in that order. You should have both a `Pipfile.lock` and `Pipfile` in your repo.). 
+  - in pipenv: `eb init --platform python-3.7 --region us-east-1 CHOOSE-YOUR-NAME` AWS will look for either a `requirements.txt` or `Pipfile.lock` or `Pipfile` to install your dependencies, in that order. You should have both a `Pipfile.lock` and `Pipfile` in your repo.). 
 8. `eb create your-app-name`
 9. If your app uses environment variables, set them in the [Elastic Beanstalk console](https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/environments-cfg-softwaresettings.html#environments-cfg-softwaresettings-console)
 10. `eb open`
