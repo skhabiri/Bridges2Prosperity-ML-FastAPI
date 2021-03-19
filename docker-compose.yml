@@ -46,7 +46,8 @@ services:
         
         # Jupiter lab runs on port 8888 of the docker image "b2p/notebook"   
         # bash -c allows multiple command
-                
+        
+        # For deployment we comment this out        
         command: bash -c "jupyter lab --debug --ip='*' --port=8888 --allow-root && /bin/bash"
         
         # alternative way to launch shell for a service container. 
