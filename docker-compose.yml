@@ -28,7 +28,7 @@ services:
             - 80:8000
 
     
-##    ipynotebook:
+    ipynotebook:
     
 ##        image: b2p/notebook
         
@@ -44,8 +44,8 @@ services:
     
         # First starts the apiwebapp and then ipynotebook.
         # Not really needed here
-##        depends_on:
-##            - apiwebapp
+        depends_on:
+            - apiwebapp
         
         # Jupiter lab runs on port 8888 of the docker image "b2p/notebook"   
         # bash -c allows multiple command
@@ -70,6 +70,6 @@ services:
         ###############################################
         
         # maps local host port 8888 to docker image ("b2p/notebook") port 8888
-##        ports:
-##            - 8888:8888
-##            - 8889:8889
+        ports:
+            - 8888:8888
+            - 8889:8889

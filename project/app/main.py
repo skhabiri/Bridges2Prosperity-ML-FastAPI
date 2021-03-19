@@ -6,9 +6,9 @@ import uvicorn
 from app.api import predict, viz, dbpgsql
 
 app = FastAPI(
-    title='Labs28-Bridges-DS-D-2020',
-    description='# Version2-Deployment',
-    version='0.2',
+    title='Bridges To Prosperity- FastAPI app',
+    description='# Version3-Deployment',
+    version='0.3',
     docs_url='/',
 )
 
