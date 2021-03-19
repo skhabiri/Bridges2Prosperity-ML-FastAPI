@@ -1,9 +1,63 @@
 
+## Model 
+The model being used in the deployment is a random forest model supported with Synthetic Minority Oversampling Technique (SMOTE).
+ - The [latest deployment](https://lab28dsk.bridgestoprosperity.dev/) is based on this [google colabs notebook](https://colab.research.google.com/github/Lambda-School-Labs/bridges-to-prosperity-ds-d/blob/main/notebooks/b2p_d.ipynb)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 # Bridges to Prosperity
 [Bridges to Prosperity (B2P)](https://www.bridgestoprosperity.org) footbridges works with isolated communities to create access to essential health care, education and economic opportunities by building footbridges over impassable rivers.
 
 ## Dataset
-The dataset consists of survey data of 1472 sites (rows) with 44 features. The “Stage” column shows the status of the project. The “senior_engineering_review” shows if the site has been reviewed by engineering team or not. Among all the rows of the dataset only 65 projects are reviewed and approved and 24 projects are reviewed and rejected. The rest (1383 rows) do not have any target label.
+The main dataset is [B2P Dataset_2020.10.xlsx](https://github.com/skhabiri/bridges-to-prosperity-b2p/raw/main/Data/B2P%20Dataset_2020.10.xlsx). It consists of survey data of 1472 sites (rows) with 44 features. The “Stage” column shows the status of the project. The “senior_engineering_review” shows if the site has been reviewed by engineering team or not. Among all the rows of the dataset only 65 projects are reviewed and approved and 24 projects are reviewed and rejected. The rest (1383 rows) do not have any target label. [b2p_main_sk.ipynb](https://github.com/skhabiri/bridges-to-prosperity-b2p/blob/main/notebooks/b2p_main_sk.ipynb) is used to clean up the data to `df` dataframe and downloaded to [main_data_clean.csv](https://github.com/skhabiri/bridges-to-prosperity-b2p/raw/main/notebooks/main_data_clean.csv). Additionally, a similar dataset [B2P_World_Dataset_2020.01.14.xls](https://github.com/skhabiri/bridges-to-prosperity-b2p/raw/main/Data/B2P_World_Dataset_2020.01.14.xls) is loaded from https://data.world/ and merged with the main dataset in an attempt to extend the training data. 
+
+## Objective:
+As mentioned in Dataset section, a number of sites have been reviewed by the  senior engineering team and the projects have been either accepted or rejected to continue. Reviewing the sites by the engineering team is a time onsuming project and we like to hand over to engineering team only the projects that have a goo chane of being accepted to save cost. Hene despite a very unbalance nature and number of samples we like to make a prediction on the engineering review final decision about the projects. We process the target label into three main classes as `Unknown`, `negative`, `positive`.
+  ```python
+  def process_target(df):
+  data = df.copy()
+
+  # Split the dataset:
+  # Positives:
+  positive = (
+      (data['senior_engineering_review_conducted']=='Yes') & 
+      (data['bridge_opportunity_stage'].isin(
+      ['Complete', 'Prospecting', 'Confirmed', 'Under Construction']))
+      )
+  
+  # Negatives:
+  negative = (
+      (data['senior_engineering_review_conducted']=='Yes') & 
+      (data['bridge_opportunity_stage'].isin(['Rejected', 'Cancelled']))
+      )
+  
+
+  # Unknown:
+  unknown = data['senior_engineering_review_conducted'].isna()
+``
+
 
 ## Project Challenge
 Based on the existing input data we want to know if we can classify the sites as being rejected or not in any future review conducted by senior engineering team. In other words we want to find out which sites will be technically rejected in future engineering reviews.
