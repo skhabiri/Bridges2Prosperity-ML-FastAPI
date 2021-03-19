@@ -1,19 +1,15 @@
 
-# Links to Deployments
-<p>&nbsp;</p>
+# Bridges to Prosperity
+[Bridges to Prosperity (B2P)](https://www.bridgestoprosperity.org) footbridges works with isolated communities to create access to essential health care, education and economic opportunities by building footbridges over impassable rivers.
 
-[Docs](https://docs.labs.lambdaschool.com/data-science/)
+## Dataset
+The dataset consists of survey data of 1472 sites (rows) with 44 features. The “Stage” column shows the status of the project. The “senior_engineering_review” shows if the site has been reviewed by engineering team or not. Among all the rows of the dataset only 65 projects are reviewed and approved and 24 projects are reviewed and rejected. The rest (1383 rows) do not have any target label.
 
-[Latest deployment](https://lab28dsk.bridgestoprosperity.dev/)
+## Project Challenge
+Based on the existing input data we want to know if we can classify the sites as being rejected or not in any future review conducted by senior engineering team. In other words we want to find out which sites will be technically rejected in future engineering reviews.
 
-[Previous deployment](https://b2pmergefinal.bridgestoprosperity.dev/)
-
-[Deployed API](https://d-ds.bridgestoprosperity.dev/) 
-
-[Deployed API#2](https://d-ds-labs28.bridgestoprosperity.dev )
-
-# Architeture
-This block diagram below shows the architecture of the project:
+## Architecture
+The block diagram below shows different sections of the project.
 <img src="https://github.com/skhabiri/bridges-to-prosperity-b2p/raw/main/assets/b2p_diagram.png">
 
 # Setting up the Project:
