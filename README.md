@@ -474,8 +474,17 @@ gs_model = GridSearchCV(pipe, param_grid=gs_params, cv=10,
 gs_model.fit(X_train, y_train)
 ```
 The best estimator is saved for later evaluation. `gs_best = gs_model.best_estimator_`.
+
+#### Model serialization
+Now let's use a scikit-learn model. We want to save the a trained model so you can use it without retraining. This is sometimes called "pickling."  See [scikit-learn docs on "model persistence"](https://scikit-learn.org/stable/modules/model_persistence.html) & [Keras docs on "serialization and saving."](https://keras.io/guides/serialization_and_saving/)
+```
+import pickle
+# Model serialization
+pickle.dump(gs_best, open("gs_model", 'wb'))
+model_gs = pickle.load(open("gs_model",'rb'))
+```
 #### Model prediction and evaluation
-For training the model we selected six features that based on the domain knowlege seems to be most relevant to the engineering process re iew. After fitting the model we run some queries to evaluate the model accuracy. In the process I noticed that FastAPI treat the missing values of the selected features differently and the model can produce ifferent results depending on how to fill the missing values. Here is the prediction function. It recieves a JSON data as input query for selected features and returns the predicted class as well as the probability of the prediction.
+For training the model we selected six features that based on the domain knowlege seems to be most relevant to the engineering process review. After fitting the model we run some queries to evaluate the model accuracy. Here is the prediction function. It recieves a JSON data as input query for selected features and returns the predicted class as well as the probability of the prediction.
 ```
 def prediction(model, query):
   """
@@ -488,40 +497,115 @@ def prediction(model, query):
   # class prediction and its probability
   return model.predict(query_ser)[0], model.predict_proba(query_ser)[0][int(model.predict(query_ser)[0])]
 ```
+Let's run some queries:
+```
+query = X_train.iloc[10,:].to_dict()
+query
+```
+{'bridge_opportunity_bridge_type': 'Suspension Bridge',
+ 'bridge_opportunity_span_m': 85.0,
+ 'days_per_year_river_is_flooded': 121.0,
+ 'bridge_classification': 'Standard',
+ 'flag_for_rejection': 'No',
+ 'height_differential_between_banks': 0.97}
+```
+assert y[10] == prediction(model_gs, query)
+prediction(model_gs, query)
+```
+(1.0, 0.9611480311321021)
+
+With probability of 0.96 it predicts the target label is 1. In the process, I noticed that FastAPI treats the missing values of the selected features differently and the model can produce different results depending on how to fill the missing values.
+Here is an example:
+```
+query2a = X_train.iloc[0,:].to_dict()
+print(prediction(model_gs, query2a), y[0])
+print(type(query2a['bridge_classification']))
+print(query2a['bridge_classification'])
+query2a
+```
+(0.0, 0.5231655566249169) 0.0
+<class 'float'>
+nan
+{'bridge_opportunity_bridge_type': 'Suspended Bridge',
+ 'bridge_opportunity_span_m': 52.44,
+ 'days_per_year_river_is_flooded': 78.63,
+ 'bridge_classification': nan,
+ 'flag_for_rejection': 'Yes',
+ 'height_differential_between_banks': 0.97}
+
+Now let's replace the missing value with different nan types:
+```python
+# Some inconsistancy issue with defining missing value types in FastAPI
+query2b = {
+  "bridge_classification": "",
+  "bridge_opportunity_bridge_type": "Suspended Bridge",
+  "bridge_opportunity_span_m": 52.44,
+  "days_per_year_river_is_flooded": 78.63,
+  "flag_for_rejection": "Yes",
+  "height_differential_between_banks": 0.97 
+}
+print(query2b)
+for val in ["nan","", None, np.nan]:
+  query2b["bridge_classification"] = val
+  print(type(query2b['bridge_classification']))
+  print(prediction(model_gs, query2b))
+```
+{'bridge_classification': '', 'bridge_opportunity_bridge_type': 'Suspended Bridge', 'bridge_opportunity_span_m': 52.44, 'days_per_year_river_is_flooded': 78.63, 'flag_for_rejection': 'Yes', 'height_differential_between_banks': 0.97}
+
+<class 'str'>
+(1.0, 0.603189091907065)
+<class 'str'>
+(1.0, 0.603189091907065)
+<class 'NoneType'>
+(1.0, 0.603189091907065)
+<class 'float'>
+(1.0, 0.7013543055860129)
+
+`"nan"`, `""`, `None` yield probability of 0.6, `np.nan` calculates the probability as 0.7 while missing value as was seen earlier resulted in probability of 0.52.
+
+The cleaned up input data set is saved as [main_data_clean.csv](https://github.com/skhabiri/bridges-to-prosperity-b2p/raw/main/notebooks/main_data_clean.csv). 
+```
+print(df.shape)
+df.columns
+```
+(1472, 43)
+Index(['bridge_name', 'bridge_opportunity_project_code',
+       'bridge_opportunity_needs_assessment',
+       'bridge_opportunity_level1_government',
+       'bridge_opportunity_level2_government',
+       'bridge_opportunity_gps_latitude', 'bridge_opportunity_gps_longitude',
+       'bridge_opportunity_bridge_type', 'bridge_opportunity_span_m',
+       'bridge_opportunity_individuals_directly_served',
+       'bridge_opportunity_comments', 'form_form_name', 'form_created_by',
+       'proposed_bridge_location_gps_latitude',
+       'proposed_bridge_location_gps_longitude', 'current_crossing_method',
+       'nearest_all_weather_crossing_point', 'days_per_year_river_is_flooded',
+       'flood_duration_during_rainy_season', 'market_access_blocked_by_river',
+       'education_access_blocked_by_river', 'health_access_blocked_by_river',
+       'other_access_blocked_by_river', 'primary_occupations',
+       'primary_crops_grown', 'river_crossing_deaths_in_last_3_years',
+       'river_crossing_injuries_in_last_3_years', 'incident_descriptions',
+       'notes_on_social_information', 'cell_service_quality',
+       'four_wd _accessibility', 'name_of_nearest_city',
+       'name_of_nearest_paved_or_sealed_road', 'bridge_classification',
+       'flag_for_rejection', 'rejection_reason', 'bridge_type',
+       'estimated_span_m', 'height_differential_between_banks',
+       'bridge_opportunity_general_project_photos',
+       'bridge_opportunity_casesafeid', 'country', 'good_site'],
+      dtype='object')
+
+The input train set for the model training is saved as [predict_df.csv](https://github.com/skhabiri/bridges-to-prosperity-b2p/raw/main/notebooks/predict_df.csv).
+```
+print(X.shape)
+X.columns
+```
+(1472, 7)
+Index(['bridge_opportunity_bridge_type', 'bridge_opportunity_span_m',
+       'days_per_year_river_is_flooded', 'bridge_classification',
+       'flag_for_rejection', 'height_differential_between_banks'],
+      dtype='object')
 
 
-#### Model serialization
-Now let's use a scikit-learn model. We want to save the a trained model so you can use it without retraining. This is sometimes called "pickling."  See [scikit-learn docs on "model persistence"](https://scikit-learn.org/stable/modules/model_persistence.html) & [Keras docs on "serialization and saving."](https://keras.io/guides/serialization_and_saving/)
-
-
-
-
-
-```
-import joblib
-joblib.dump(model, 'model.joblib', compress=True)
-```
-If you're using a Colab notebook, you'll need to download the file using code like this:
-```
-from google.colab import files
-files.download('model.joblib')
-```
-You also need to get the exact version numbers of all libraries used in your saved model. For example, you can run code like this:
-```
-import joblib
-import sklearn
-print(f'joblib=={joblib.__version__}')
-print(f'scikit-learn=={sklearn.__version__}')
-```
-Install your dependencies into your virtual environment, with exact version numbers. For example:
-```
-pipenv install joblib==1.0.0 scikit-learn==0.22.2.post1
-```
-Add these lines of code to your app/ml.py file.
-```
-import joblib
-model = joblib.load('app/model.joblib')
-```
 Save your .env file in the following location: project/app/api/.env  and run the app locally from repo directory: `docker-compose up`, which will run `uvicorn app.main:app --reload` in the container with specified python version and installed packages built in the docker image. If there is a need, docker-compose will rebuild the image and create a container based on that. You can open the app in browser at `localhost:80`.
 Or with pipenv use:
 ```
@@ -758,6 +842,114 @@ Follow these instructions to deploy the first time. 🚀
 Reference docs: 
 https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/create-deploy-python-apps.html
 https://fastapi.tiangolo.com/deployment/manually/
+
+#### Packages
+Here are the list of packages used
+Package             Version
+------------------- ---------
+anyio               2.2.0
+argon2-cffi         20.1.0
+async-generator     1.10
+attrs               20.3.0
+Babel               2.9.0
+backcall            0.2.0
+bleach              3.3.0
+category-encoders   2.2.2
+certifi             2020.12.5
+cffi                1.14.5
+chardet             4.0.0
+click               7.1.2
+cycler              0.10.0
+decorator           4.4.2
+defusedxml          0.7.1
+entrypoints         0.3
+et-xmlfile          1.0.1
+fastapi             0.60.1
+greenlet            1.0.0
+h11                 0.9.0
+httptools           0.1.1
+idna                2.10
+imbalanced-learn    0.4.3
+imblearn            0.0
+ipykernel           5.5.0
+ipython             7.21.0
+ipython-genutils    0.2.0
+jedi                0.18.0
+Jinja2              2.11.3
+joblib              1.0.1
+json5               0.9.5
+jsonschema          3.2.0
+jupyter-client      6.1.12
+jupyter-core        4.7.1
+jupyter-packaging   0.7.12
+jupyter-server      1.4.1
+jupyterlab          3.0.11
+jupyterlab-pygments 0.1.2
+jupyterlab-server   2.3.0
+kiwisolver          1.3.1
+MarkupSafe          1.1.1
+matplotlib          3.3.4
+mistune             0.8.4
+nbclassic           0.2.6
+nbclient            0.5.3
+nbconvert           6.0.7
+nbformat            5.1.2
+nest-asyncio        1.5.1
+notebook            6.2.0
+numpy               1.20.1
+openpyxl            3.0.7
+packaging           20.9
+pandas              1.2.3
+pandocfilters       1.4.3
+parso               0.8.1
+patsy               0.5.1
+pexpect             4.8.0
+pickleshare         0.7.5
+Pillow              8.1.2
+pip                 21.0.1
+plotly              4.9.0
+prometheus-client   0.9.0
+prompt-toolkit      3.0.17
+psycopg2-binary     2.8.6
+ptyprocess          0.7.0
+pycparser           2.20
+pydantic            1.8.1
+Pygments            2.8.1
+pyparsing           2.4.7
+pyrsistent          0.17.3
+python-dateutil     2.8.1
+python-dotenv       0.14.0
+pytz                2021.1
+pyzmq               22.0.3
+requests            2.25.1
+retrying            1.3.3
+scikit-learn        0.22
+scipy               1.6.1
+seaborn             0.11.0
+Send2Trash          1.5.0
+setuptools          54.1.1
+six                 1.15.0
+sniffio             1.2.0
+SQLAlchemy          1.4.1
+starlette           0.13.6
+statsmodels         0.12.2
+terminado           0.9.3
+testpath            0.4.4
+tornado             6.1
+traitlets           5.0.5
+typing-extensions   3.7.4.3
+urllib3             1.26.4
+uvicorn             0.11.8
+uvloop              0.15.2
+wcwidth             0.2.5
+webencodings        0.5.1
+websockets          8.1
+wheel               0.36.2
+xlrd                2.0.1
+
+
+
+
 
 ## Clean up AWS
 If not needed delete all application versions and terminate the environment to avoid extra cost. Link to [doc](https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/GettingStarted.Cleanup.html)
