@@ -32,8 +32,11 @@ services:
     
         image: b2p/notebook
         
-        stdin_open: true
-        tty: true
+        ###############################################
+        # For openning terminal, not working
+        #stdin_open: true
+        #tty: true
+        ###############################################
         
         # The web service uses an image that’s built from the Dockerfile located in the ./notebooks directory.
         build: 
@@ -47,8 +50,11 @@ services:
         # Jupiter lab runs on port 8888 of the docker image "b2p/notebook"   
         # bash -c allows multiple command
         
+        ###############################################
         # For deployment we comment this out        
         #command: bash -c "jupyter lab --debug --ip='*' --port=8888 --allow-root && /bin/bash"
+        ###############################################
+        
         
         # alternative way to launch shell for a service container. 
         # Enter `docker-compose up`, then open another terminal
@@ -56,9 +62,12 @@ services:
         # Now we can launch jupyter in the docker container that belongs to the service
         # 2. jupyter lab --debug --ip='*' --allow-root 
     
-        volumes:
-            - ./Data:/usr/src/b2p/Data
-            - ./notebooks:/usr/src/b2p/notebooks
+        ###############################################
+        # commented out for deployment
+        #volumes:
+        #    - ./Data:/usr/src/b2p/Data
+        #    - ./notebooks:/usr/src/b2p/notebooks
+        ###############################################
         
         # maps local host port 8888 to docker image ("b2p/notebook") port 8888
         ports:
