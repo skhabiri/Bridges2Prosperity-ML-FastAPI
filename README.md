@@ -13,8 +13,8 @@
 [Deployed API#2](https://d-ds-labs28.bridgestoprosperity.dev )
 
 # Architeture
-Use [Whimsical](https://whimsical.com/) account.
-![Welcome Video](https://github.com/Lambda-School-Labs/bridges-to-prosperity-ds-d/blob/main/assets/Flowchart.png)
+This block diagram below shows the architecture of the project:
+<img src="https://github.com/skhabiri/bridges-to-prosperity-b2p/raw/main/assets/b2p_diagram.png">
 
 # Setting up the Project:
 First clone the repository to your local machine
