@@ -8,10 +8,6 @@ The dataset consists of survey data of 1472 sites (rows) with 44 features. The �
 ## Project Challenge
 Based on the existing input data we want to know if we can classify the sites as being rejected or not in any future review conducted by senior engineering team. In other words we want to find out which sites will be technically rejected in future engineering reviews.
 
-## Architecture
-The block diagram below shows different sections of the project.
-<img src="https://github.com/skhabiri/bridges-to-prosperity-b2p/raw/main/assets/b2p_diagram.png">
-
 # Setting up the Project:
 First clone the repository to your local machine
 ```
@@ -35,68 +31,14 @@ In this project instead of pipenv we use Docker Compose to run our app in an iso
 
 ### Docker
 For building a docker image we need Dockerfile which specifies: the base python to use, working directory on the image volume, all the package dependencies, and the files (web app) that needs to be copied from the host container to the image.
-In this approach we build an image based on a python version and packagees specified in requirements.txt. We also map the local volume to the container volume that will be created based on this image. Additionally using docker-compose would allow us to run some services such as web server inside the container. For that we would need to define the networking ports, volume mapping and point of entry command to run. Here are the files that we need to build the image and compose multiple services into one container.
-
-#### Dockerfile
-
-This file is used to build a custom image. 
-```
-# pull official base image, python:3.8-slim-buster
-FROM python:3.8-slim-buster
-
-# set the working directory in container to /usr/src/app
-WORKDIR /usr/src/app
-
-# install pip for python3.8 in the custom image
-RUN python -m pip install --upgrade pip
-
-# copy requirements.txt from current directory in docker host to WORKDIR in the image
-COPY ./requirements.txt .
+In this approach we build an image based on a python version and packagees specified in requirements.txt. We also map the local volume to the container volume that will be created based on this image. Additionally using docker-compose would allow us to run some services such as web server inside the container. For that we would need to define the networking ports, volume mapping and point of entry command to run.
 
 
-# install python dependencies
-RUN pip install -r requirements.txt
-
-# copy everything from docker host current directory to the WORKDIR image (adding app)
-COPY . .
-```
-docker-compose allows to have a container composed of multiple services. We use docker-compose.yml to define the services, entry point command, volume and network port mapping from the docker host to the container.
-
-#### docker-compose.yml 
-The Compose file defines services such as web and volumes and networks for a Docker application.
-```
-version: '3.7'
-services:
-  web:
-    # The web service uses an image that’s built from the Dockerfile located in the ./project directory.
-    build: ./project
-    
-    #entry point for docker-compose up
-    command: uvicorn app.main:app --reload --workers 1 --host 0.0.0.0 --port 8000
-
-    # mounts volume ./project to container's /usr/src/app path
-    volumes:
-      - ./project:/usr/src/app
-    
-    # maps container port 8000 to TCP port 80 on the docker host and from there to the outside world
-    ports:
-      - 80:8000
-```
-mounting ./project directory on the host to /use/src/app inside the container, allows modifying the code on the fly, without having to rebuild the image, as the container gets updated in real time.
-In docker-compose.yml have have 80:8000 on the last line. This will connect host port 80 (the default port for HTTP) to container port 8000 (where the app is running).
+## Architecture
+The block diagram below shows different sections of the project.
+<img src="https://github.com/skhabiri/bridges-to-prosperity-b2p/raw/main/assets/b2p_diagram.png">
 
 
-from the directory with docker-compose.yml we build the docker services image:
-```
-docker-compose build #builds the images, does not start the containers
-docker-compose up #builds the images if the images do not exist and starts the container
-docker-compose up --build #forced to build the images even when not needed and starts the containers
-```
-To list the images used to create containers, use `docker-compose images`. You won't need to rebuild when you update your code. You'll only need to rebuild if you update your requirements.txt or Dockerfile.
-
-Now we can locally launch the web service in docker container with `docker-compose up`.
-
-enter http://0.0.0.0:80 in web browser to launch the API locally
 
 ## AWS
 AWS is a cloud platform that offers various services.
@@ -408,6 +350,170 @@ Or with pipenv use:
 pipenv shell
 uvicorn app.main:app --reload
 ```
+
+## Containerize the app in Docker-Compose
+The essential proposition of a Docker container is we can develop and test the entire project on our local machine and set up everything that is needed to run it properly and when it's done we put the whole thing in a container and deploy it on the cloud being certain that it would behave the same way as on our local host. So there are two advantages or `portability` and `reproducibility`.
+
+Docker-Compose is simply a tool that allows you to describe a collection of multiple containers that can interact via their own network. We compose the containers in docker-compose.yml. We define containers as services, define volumes to store data, set port forwards.
+There are a few important concepts in docker that I would like to cover here.
+
+#### Docker Engine
+Docker engine is the layer on which Docker runs. It’s a lightweight runtime and tooling that manages containers, images, builds, and more. It runs natively on Linux systems and is made up of:
+1. A Docker Daemon that runs in the host computer.
+2. A Docker Client that communicates with the Docker Daemon through a REST API.
+
+#### Docker Image
+Images are read-only templates that you build from a set of instructions written in your Dockerfile. Images define both what you want your packaged application and its dependencies to look like *and* what processes to run when it’s launched.
+
+The Docker image is built using a Dockerfile. Each instruction in the Dockerfile adds a new “layer” to the image,
+
+#### Docker Containers
+A Docker container, as discussed above, wraps an application’s software into an invisible box with everything the application needs to run. That includes the operating system, application code, runtime, system tools, system libraries, and etc. Docker containers are built off Docker images. Since images are read-only, Docker adds a read-write file system over the read-only file system of the image to create a container.
+
+#### Union File Systems
+Docker uses Union File Systems to build up an image. You can think of a Union File System as a stackable file system, meaning files and directories of separate file systems (known as branches) can be transparently overlaid to form a single file system. The images are read-only and the containers are writable.
+
+<docker_layers.png>
+<volumes_in_docker.png>
+
+#### Volumes
+Volumes are the **data** part of a container, initialized when a container is created. Volumes allow you to persist and share a container’s data. Data volumes are separate from the default Union File System and exist as normal directories and files on the **host** filesystem. So, even if you destroy, update, or rebuild your container, the data volumes will remain untouched. When you want to update a volume, you make changes to it directly in the container. Basically when we run a container let's say for an app and generate some data, the data is going to be lost once we exit the docker environment. This is the property of the containers that are disposable. If we ever needed to persist the collected data, we could define a volume that would basically maps a local host directory to a path relative to working directory in the container. This would allow to directly write to the volume from the container and have the data persist even after we exit the container.
+Additionally, data volumes can be shared and reused among multiple containers. That would be also helpful during building the images as we can decide what files to copy over to the container that would be built based on image and what files/data to share with a container without copying to the image.
+
+In the docker-compose.yml we can use host:container format to define the volume mapping. The volume can be defined for each service or in a higher scope for all services in one place.
+```
+volumes:
+  # Just specify a path in the container and let the Engine create a volume.
+  # The location of the volume on the host can be retrieved by "docker volume inspect <ProjectDir>_<Named Volume>"
+  - /var/lib/mysql
+
+  # Specify an absolute path mapping
+  - /opt/data:/var/lib/mysql
+
+  # Path on the host, relative to the Compose file (docker-compose.yml)
+  - ./cache:/tmp/cache
+
+  # User-relative path
+  - ~/configs:/etc/configs/:ro
+
+  # Named volume
+  - datavolume:/var/lib/mysql
+```
+
+#### Port forwarding
+When creating the container, Docker creates a network interface so that the container can talk to the local host, attaches an available IP address to the container, and executes the process that we specified to run the application when defining the image. We can access a service port in a container by mapping it to a port in the local docker host: `host_port:container_port`.
+
+#### Dockerfile
+A Dockerfile is where you write the instructions to build a Docker image. RUN is an image build step, the state of the container after a RUN command will be committed to the container image. A Dockerfile can have many RUN steps that layer on top of one another to build the image.
+
+```
+
+```
+
+
+
+
+
+#### docker-compose.yml
+Compose file allows to define multiple services each with potentially a separate build and docker file and hence defferent container. We use docker-compose.yml to define the services, entry point command, volume and network port mapping from the docker host to the container. We can define dependency of the services to eachother or in other word the sequence of the services to start up. With `command` We can overwrite the CMD in dockerfiles and define what each service does when starts up. We can designate separate docker file to each service and specifiy its location for building a service image. 
+CMD is the command the container executes by default when we launch the built image. A Dockerfile will only use the final CMD defined. The CMD can be overridden when starting a container with docker run $image $other_command.
+
+Here we have two services. One for the web app named `apiwebapp` and the other one named `ipynotebook` is used to launch a teminal and start a jupyter kernel to edit the notebook files. `ipynotebook` service uses `apiwebapp` service image as the base. Hence inherits all the installed packages.
+Another way to execute a command such as jupyuter kernel server in a running container is to 
+1. `docker-compose up`
+2. switchto another terminal and open a bash associated with a service container
+  - `docker-compose exec ipynotebook /bin/bash`
+3. Run any command in the container bash session
+  - `jupyter lab --debug --ip='*' --allow-root`
+
+
+```
+# Each service can be built separately and would have its own image and container
+
+version: '3.7'
+
+
+services:
+    
+    # service name is arbitrary
+    apiwebapp:
+        
+        # tag a name to its docker built image
+        image: b2p/fastapi-app
+        
+        # The apiwebapp service builds an image with a Dockerfile located in the ./project directory.
+        build: 
+            context: ./project
+        
+        # Command to run, when docker container is created, `docker-compose up`
+        command: uvicorn app.main:app --reload --workers 1 --host 0.0.0.0 --port 8000
+    
+        # mounts volume ./project to container's /usr/src/app path
+        #volumes:
+        #    - ./project:/usr/src/app
+    
+        
+        # maps container port 8000 to TCP port 80 on the docker host and from there to the outside world
+        ports:
+            - 80:8000
+
+    
+    ipynotebook:
+    
+        image: b2p/notebook
+        
+        stdin_open: true
+        tty: true
+        
+        # The web service uses an image that’s built from the Dockerfile located in the ./notebooks directory.
+        build: 
+            context: ./notebooks
+    
+        # First starts the apiwebapp and then ipynotebook.
+        # Not really needed here
+        depends_on:
+            - apiwebapp
+        
+        # Jupiter lab runs on port 8888 of the docker image "b2p/notebook"   
+        # bash -c allows multiple command
+                
+        command: bash -c "jupyter lab --debug --ip='*' --port=8888 --allow-root && /bin/bash"
+        
+        # alternative way to launch shell for a service container. 
+        # Enter `docker-compose up`, then open another terminal
+        # 1. docker-compose exec ipynotebook /bin/bash # use `exit` to exit the service shell
+        # Now we can launch jupyter in the docker container that belongs to the service
+        # 2. jupyter lab --debug --ip='*' --allow-root 
+    
+        volumes:
+            - ./Data:/usr/src/b2p/Data
+            - ./notebooks:/usr/src/b2p/notebooks
+        
+        # maps local host port 8888 to docker image ("b2p/notebook") port 8888
+        ports:
+            - 8888:8888
+            - 8889:8889
+```
+
+mounting ./project directory on the host to /use/src/app inside the container, allows modifying the code on the fly, without having to rebuild the image, as the container gets updated in real time.
+In docker-compose.yml we have 80:8000 on the last line. This will connect host port 80 (the default port for HTTP) to container port 8000 (where the app is running).
+
+#### Build and run the docker-compose
+
+from the directory with docker-compose.yml we build the docker service images:
+```
+docker-compose build #builds the images, does not start the containers
+docker-compose up #builds the images if the images do not exist and starts the container
+docker-compose up --build #forced to build the images even when not needed and starts the containers
+```
+To list the images used to create containers, use `docker-compose images`, or `docker images`. With defining the volumes you won't need to rebuild when you update your code. You'll only need to rebuild if you update your requirements.txt or Dockerfile.
+
+Now we can locally launch the `apiwebapp` service in docker-compose with `docker-compose up`.
+
+enter http://0.0.0.0:80 in web browser to launch the API locally
+
+
+docker-compose specification can be found [here](https://github.com/compose-spec/compose-spec).
 
 ## Deploy the FastAPI app to AWS Elastic Beanstalk
 Follow these instructions to deploy the first time. 🚀
