@@ -48,7 +48,7 @@ services:
         # bash -c allows multiple command
         
         # For deployment we comment this out        
-        command: bash -c "jupyter lab --debug --ip='*' --port=8888 --allow-root && /bin/bash"
+        #command: bash -c "jupyter lab --debug --ip='*' --port=8888 --allow-root && /bin/bash"
         
         # alternative way to launch shell for a service container. 
         # Enter `docker-compose up`, then open another terminal
