@@ -605,14 +605,6 @@ Index(['bridge_opportunity_bridge_type', 'bridge_opportunity_span_m',
        'flag_for_rejection', 'height_differential_between_banks'],
       dtype='object')
 
-
-Save your .env file in the following location: project/app/api/.env  and run the app locally from repo directory: `docker-compose up`, which will run `uvicorn app.main:app --reload` in the container with specified python version and installed packages built in the docker image. If there is a need, docker-compose will rebuild the image and create a container based on that. You can open the app in browser at `localhost:80`.
-Or with pipenv use:
-```
-pipenv shell
-uvicorn app.main:app --reload
-```
-
 ## Containerize the app in Docker-Compose
 The essential proposition of a Docker container is we can develop and test the entire project on our local machine and set up everything that is needed to run it properly and when it's done we put the whole thing in a container and deploy it on the cloud being certain that it would behave the same way as on our local host. So there are two advantages or `portability` and `reproducibility`.
 
@@ -663,6 +655,7 @@ volumes:
   # Named volume
   - datavolume:/var/lib/mysql
 ```
+The location of the `named volume` on the host can be retrieved by `docker volume inspect <ProjectDir>_<Named Volume>`.
 
 #### Port forwarding
 When creating the container, Docker creates a network interface so that the container can talk to the local host, attaches an available IP address to the container, and executes the process that we specified to run the application when defining the image. We can access a service port in a container by mapping it to a port in the local docker host: `host_port:container_port`.
@@ -692,6 +685,7 @@ RUN pip install -r ./requirements.txt
 # copy everything from docker host curren directory "./project" to the WORKDIR image
 COPY . .
 ```
+
 This Dockerfile is used to create "ipynotebook" service image, which is defined in "docker-compose.yml"
 ```
 # pull base image from "apiwebapp" service docker image 
@@ -808,7 +802,7 @@ In docker-compose.yml we have 80:8000 on the last line. This will connect host p
 
 #### Build and run the docker-compose
 
-from the directory with docker-compose.yml we build the docker service images:
+From the directory with docker-compose.yml we build the docker service images:
 ```
 docker-compose build #builds the images, does not start the containers
 docker-compose up #builds the images if the images do not exist and starts the container
@@ -816,11 +810,15 @@ docker-compose up --build #forced to build the images even when not needed and s
 ```
 To list the images used to create containers, use `docker-compose images`, or `docker images`. With defining the volumes you won't need to rebuild when you update your code. You'll only need to rebuild if you update your requirements.txt or Dockerfile.
 
-Now we can locally launch the `apiwebapp` service in docker-compose with `docker-compose up`.
+## Run the app on the local host
+Save your .env file in the following location: project/app/api/.env  and run the app locally from repo directory where docker-compose.yml exist: `docker-compose up`, which will run `uvicorn app.main:app --reload` in the container with specified python version in the base image, `python:3.8-slim-buster` and installed packages built in the docker images. 
 
-enter http://0.0.0.0:80 in web browser to launch the API locally
-
-
+You can open the `apiwebapp` service  in a browser at `localhost:80` (http://0.0.0.0:80).
+Or if using pipenv instead of docker-compose:
+```
+pipenv shell
+uvicorn app.main:app --reload
+```
 docker-compose specification can be found [here](https://github.com/compose-spec/compose-spec).
 
 ## Deploy the FastAPI app to AWS Elastic Beanstalk
