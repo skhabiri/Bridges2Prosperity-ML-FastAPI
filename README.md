@@ -843,6 +843,7 @@ https://fastapi.tiangolo.com/deployment/manually/
 
 #### Packages
 Here are the list of packages used
+```shell
 Package             Version
 ------------------- ---------
 anyio               2.2.0
@@ -944,10 +945,7 @@ webencodings        0.5.1
 websockets          8.1
 wheel               0.36.2
 xlrd                2.0.1
-
-
-
-
+```
 
 ## Clean up AWS
 If not needed delete all application versions and terminate the environment to avoid extra cost. Link to [doc](https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/GettingStarted.Cleanup.html)
