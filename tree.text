@@ -1,0 +1,81 @@
+.
+├── .ebignore
+├── .elasticbeanstalk
+│   └── config.yml
+├── Data
+│   ├── B2P\ Dataset_2020.10.xlsx
+│   ├── B2P_Rwanda_matchedIDs_final_2020-09-24.csv
+│   ├── B2P_Rwanda_matchedIDs_final_2020-09-24_copy.csv
+│   ├── B2P_World_Dataset_2020.01.14.xls
+│   ├── Predicted\ Bridge\ Sites.xlsx
+│   ├── cleaned_merged_dataset_final_revised.csv
+│   ├── main_data_clean.csv
+│   └── predict_df.csv
+├── EDA
+│   ├── closest01.csv
+│   ├── closest02.csv
+│   ├── closest03.csv
+│   ├── closest04.csv
+│   ├── closest05.csv
+│   ├── closest06.csv
+│   ├── closest07.csv
+│   ├── closest08.csv
+│   ├── closest09.csv
+│   ├── closest10.csv
+│   ├── closest11.csv
+│   ├── closest12.csv
+│   ├── closest13.csv
+│   ├── closest14.csv
+│   ├── closest15.csv
+│   ├── population_rwa_2018-10-01.csv
+│   └── test.csv
+├── LICENSE
+├── README.md
+├── assets
+│   ├── Flowchart.png
+│   ├── SSL_aws.png
+│   ├── b2p_diagram.png
+│   ├── docker_layers.png
+│   └── volumes_in_docker.png
+├── docker-compose.yml
+├── notebooks
+│   ├── Dockerfile
+│   ├── README.md
+│   ├── archive
+│   │   ├── B2P_Model.ipynb
+│   │   ├── Bridge_2_Prosperity_Cleaning_Data.ipynb
+│   │   ├── Bridges_2_Prosperity_DataFrameToPostgresSQL.ipynb
+│   │   ├── Bridges_2_Prosperity_Final_Merged_DataFrameToPostgresSQL.ipynb
+│   │   ├── Bridges_to_Prosperity_Model_Building.ipynb
+│   │   ├── Modeling_off_original_data_smote_gridsearchcv.ipynb
+│   │   └── unstructured_comment_cleaning_regex.ipynb
+│   ├── b2p_db_sk.ipynb
+│   ├── b2p_main_sk.ipynb
+│   ├── gs_model
+│   ├── main_data_clean.csv
+│   ├── predict_df.csv
+│   └── requirements.txt
+├── project
+│   ├── .elasticbeanstalk
+│   │   └── config.yml
+│   ├── Dockerfile
+│   ├── app
+│   │   ├── __init__.py
+│   │   ├── api
+│   │   │   ├── .env
+│   │   │   ├── __init__.py
+│   │   │   ├── dbpgsql.py
+│   │   │   ├── gs_model
+│   │   │   ├── predict.py
+│   │   │   └── viz.py
+│   │   ├── main.py
+│   │   └── tests
+│   │       ├── __init__.py
+│   │       ├── test_main.py
+│   │       ├── test_predict.py
+│   │       └── test_viz.py
+│   └── requirements.txt
+├── steps
+└── tree.text
+
+11 directories, 67 files
