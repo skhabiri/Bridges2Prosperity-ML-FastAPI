@@ -2,7 +2,49 @@
 [Bridges to Prosperity (B2P)](https://www.bridgestoprosperity.org) footbridges works with isolated communities to create access to essential health care, education and economic opportunities by building footbridges over impassable rivers.
 
 ## Dataset
-The main dataset is [B2P Dataset_2020.10.xlsx](https://github.com/skhabiri/bridges-to-prosperity-b2p/raw/main/Data/B2P%20Dataset_2020.10.xlsx). It consists of survey data of 1472 sites (rows) with 44 features. The “Stage” column shows the status of the project. The “senior_engineering_review” shows if the site has been reviewed by engineering team or not. Among all the rows of the dataset only 65 projects are reviewed and approved and 24 projects are reviewed and rejected. The rest (1383 rows) do not have any target label. [b2p_main_sk.ipynb](https://github.com/skhabiri/bridges-to-prosperity-b2p/blob/main/notebooks/b2p_main_sk.ipynb) is used to clean up the data to `df` dataframe and downloaded to [main_data_clean.csv](https://github.com/skhabiri/bridges-to-prosperity-b2p/raw/main/notebooks/main_data_clean.csv). Additionally, a similar dataset [B2P_World_Dataset_2020.01.14.xls](https://github.com/skhabiri/bridges-to-prosperity-b2p/raw/main/Data/B2P_World_Dataset_2020.01.14.xls) is loaded from https://data.world/ and merged with the main dataset in an attempt to extend the training data. 
+The main dataset is [B2P Dataset_2020.10.xlsx](https://github.com/skhabiri/bridges-to-prosperity-b2p/raw/main/Data/B2P%20Dataset_2020.10.xlsx). It consists of survey data of 1472 sites (rows) with 44 features. The “Stage” column shows the status of the project. The “senior_engineering_review” shows if the site has been reviewed by engineering team or not. Among all the rows of the dataset only 65 projects are reviewed and approved and 24 projects are reviewed and rejected. The rest (1383 rows) do not have any target label. 
+
+#### Data cleaning
+[b2p_main_sk.ipynb](https://github.com/skhabiri/bridges-to-prosperity-b2p/blob/main/notebooks/b2p_main_sk.ipynb) is used to clean up the data to `df` dataframe and downloaded to [main_data_clean.csv](https://github.com/skhabiri/bridges-to-prosperity-b2p/raw/main/notebooks/main_data_clean.csv). Additionally, a similar dataset [B2P_World_Dataset_2020.01.14.xls](https://github.com/skhabiri/bridges-to-prosperity-b2p/raw/main/Data/B2P_World_Dataset_2020.01.14.xls) is loaded from https://data.world/ and merged with the main dataset in an attempt to extend the training data. 
+```
+def process_target(df):
+  data = df.copy()
+
+  # Split the dataset:
+  # Positives:
+  positive = (
+      (data['senior_engineering_review_conducted']=='Yes') & 
+      (data['bridge_opportunity_stage'].isin(
+      ['Complete', 'Prospecting', 'Confirmed', 'Under Construction']))
+      )
+  
+  # Negatives:
+  negative = (
+      (data['senior_engineering_review_conducted']=='Yes') & 
+      (data['bridge_opportunity_stage'].isin(['Rejected', 'Cancelled']))
+      )
+  
+
+  # Unknown:
+  unknown = data['senior_engineering_review_conducted'].isna()
+
+  print("We are assigning all these to unknow:")
+  data['bridge_opportunity_stage'][data['senior_engineering_review_conducted'].isna()].value_counts()
+
+  # Create a new column named "Good Site." This is the target to predict.
+  # Assign a 1 for the positive class, 0 for the negative class and -1 for unkown class.
+  data.loc[positive, 'good_site'] = 1
+  data.loc[negative, 'good_site'] = 0
+  data.loc[unknown, 'good_site'] = -1
+
+  # Because these columns were used to derive the target, 
+  # We can't use them as features, or it would be leakage.
+  data = data.drop(columns=['senior_engineering_review_conducted', 'bridge_opportunity_stage'])
+  print(data['good_site'].value_counts())
+  
+  return data
+```
+We selected 6 features that are most relevant to our target label and also convert the target label classes to 0,1, and -1, where 0 is rejected, 1 is accepted and -1 is for unknown.
 
 ## Project objective and challenge
 As mentioned in Dataset section, a number of sites have been reviewed by the  senior engineering team and the projects have been either accepted or rejected to continue. Based on the existing input data we want to know if we can classify the sites as being rejected or not in any future review conducted by senior engineering team. In other words we want to find out which sites will be technically rejected in future engineering reviews.
@@ -380,8 +422,6 @@ You can read about concurency and async keyword [here](https://fastapi.tiangolo.
 * [FastAPI docs > Concurrency and async / await](https://fastapi.tiangolo.com/async/)
 * [RealPython.com Primer on Python Decorators](https://realpython.com/primer-on-python-decorators/)
 
-
-
 ### Machine learning model
 Looking at the target classes here is the distribution:
 ```
@@ -404,15 +444,59 @@ ss_model = make_pipeline_imb(
     LabelSpreading(kernel='knn', n_neighbors=2)
     )
 ```
+In the absence of sufficient data, one of the challenges is how to evaluate the performance of the model. We can look at the confusion matrix to evaluate the number of mislabled data. We can also use cross validation technique to be able to use the validation data in training process as well.
 
+Random forest classifier was also tried to be able to compare the models.
+```python
+pipe = make_pipeline_imb(
+    ce.OneHotEncoder(use_cat_names=True, cols=nonnum_features),
+    SimpleImputer(strategy='median'),
+    StandardScaler(),
+    SMOTE(random_state=42),
+    RandomForestClassifier(n_estimators=100, random_state=42)
+    )
+```
+We also did the hyper-parameter tunning and cross validation.
+```
+# Grid search CV for hypertunning and cross fold validation
+""" This prediction problem cares more about precision than 
+recall as it's more important to make a correct positive prediction
+than getting all the positves"""
 
+gs_params = {'randomforestclassifier__n_estimators': [100, 200, 50],
+              'randomforestclassifier__max_depth': [4, 6, 10, 12], 
+              'simpleimputer__strategy': ['mean', 'median']
+}
 
-
-
+gs_model = GridSearchCV(pipe, param_grid=gs_params, cv=10, 
+                        scoring='precision',
+                        return_train_score=True, verbose=0)
+gs_model.fit(X_train, y_train)
+```
+The best estimator is saved for later evaluation. `gs_best = gs_model.best_estimator_`.
+#### Model prediction and evaluation
+For training the model we selected six features that based on the domain knowlege seems to be most relevant to the engineering process re iew. After fitting the model we run some queries to evaluate the model accuracy. In the process I noticed that FastAPI treat the missing values of the selected features differently and the model can produce ifferent results depending on how to fill the missing values. Here is the prediction function. It recieves a JSON data as input query for selected features and returns the predicted class as well as the probability of the prediction.
+```
+def prediction(model, query):
+  """
+  query is a JSON data for those 7 selected columns
+  This is suitable for  our fastAPI
+  """
+  
+  # query = pd.DataFrame(data=query, index=[0])
+  query_ser = pd.DataFrame([dict(query)])
+  # class prediction and its probability
+  return model.predict(query_ser)[0], model.predict_proba(query_ser)[0][int(model.predict(query_ser)[0])]
+```
 
 
 #### Model serialization
 Now let's use a scikit-learn model. We want to save the a trained model so you can use it without retraining. This is sometimes called "pickling."  See [scikit-learn docs on "model persistence"](https://scikit-learn.org/stable/modules/model_persistence.html) & [Keras docs on "serialization and saving."](https://keras.io/guides/serialization_and_saving/)
+
+
+
+
+
 ```
 import joblib
 joblib.dump(model, 'model.joblib', compress=True)
