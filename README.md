@@ -884,8 +884,28 @@ https://fastapi.tiangolo.com/deployment/manually/
 6. open the deployed app on the browser
   - `en open`
 
-## Deployed App
-The app is accessible [here](https://b2p.skhabiri.com).
+This is how the elastic beanstalk config file, `.elasticbeanstalk/config.yml` should look like:
+```bash
+branch-defaults:
+  main:
+    environment: B2P-FastAPI-APP
+    group_suffix: null
+global:
+  application_name: B2P-FastAPI-APP
+  branch: null
+  default_ec2_keyname: null
+  default_platform: Docker
+  default_region: us-east-1
+  include_git_submodules: true
+  instance_profile: null
+  platform_name: null
+  platform_version: null
+  profile: null
+  repository: null
+  sc: git
+  workspace_type: Application
+```
+**The deployed app is accessible [here](https://b2p.skhabiri.com).**
 
 #### Packages
 Here are the list of packages used
