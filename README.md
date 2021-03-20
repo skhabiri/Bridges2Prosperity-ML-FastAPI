@@ -1026,5 +1026,9 @@ wheel               0.36.2
 xlrd                2.0.1
 ```
 
-## Clean up AWS
+## Clean up
+#### Docker
+Use `docker ps -a` to check the status of the conainers. You can delete the stopped containers with `docker container prune`, and remove the dangling images with `docker image prune`.
+
+#### AWS
 If not needed delete all application versions and terminate the environment to avoid extra cost. Link to [doc](https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/GettingStarted.Cleanup.html)
