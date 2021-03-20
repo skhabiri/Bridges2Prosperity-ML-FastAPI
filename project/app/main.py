@@ -20,8 +20,8 @@ app.include_router(predict.router)
 # app.include_router(viz.router)
 
 
-@router.get('/')
-async def root():
+@router.get('/docs')
+async def documents():
     """
     Documentation
     """
