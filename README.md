@@ -837,10 +837,13 @@ Follow these instructions to deploy the first time. 🚀
 10. `eb open`
 11. Check your logs in the [Elastic Beanstalk console](https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/using-features.logging.html), to see any error messages. When your application is deployed to Elastic Beanstalk, you'll get an automatically generated URL that you can use to connect to your API.
 12. You can create a custome domain using [Route 53](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/resource-record-sets-creating.html#resource-record-sets-elb-dns-name-procedure)
-13. 
-Reference docs: 
+13. We can use [AWS Certificate Manager (ACM)](https://console.aws.amazon.com/acm/home?region=us-east-1#/) to create a certificate for our custome domain, and [configuring our Elastic Beanstalk environment's load balancer to terminate HTTPS.](https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/configuring-https-elb.html) 
+14. Reference docs: 
 https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/create-deploy-python-apps.html
 https://fastapi.tiangolo.com/deployment/manually/
+
+## Deployed App
+The app is accessible [here](https://b2p.skhabiri.com).
 
 #### Packages
 Here are the list of packages used
