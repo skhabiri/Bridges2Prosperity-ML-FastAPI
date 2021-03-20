@@ -836,7 +836,8 @@ Follow these instructions to deploy the first time. 🚀
 9. If your app uses environment variables, set them in the [Elastic Beanstalk console](https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/environments-cfg-softwaresettings.html#environments-cfg-softwaresettings-console)
 10. `eb open`
 11. Check your logs in the [Elastic Beanstalk console](https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/using-features.logging.html), to see any error messages. When your application is deployed to Elastic Beanstalk, you'll get an automatically generated URL that you can use to connect to your API.
-
+12. You can create a custome domain using [Route 53](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/resource-record-sets-creating.html#resource-record-sets-elb-dns-name-procedure)
+13. 
 Reference docs: 
 https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/create-deploy-python-apps.html
 https://fastapi.tiangolo.com/deployment/manually/
