@@ -5,7 +5,7 @@ import uvicorn
 from app.api import predict, dbpgsql
 app = FastAPI(
     title='Bridges To Prosperity - FastAPI app',
-    description='# Version3-Deployment',
+    description='# Version3',
     version='0.3',
     docs_url='/',
 )
@@ -17,10 +17,10 @@ app.include_router(predict.router)
 
 
 @app.get('/')
-def github_repo():
+def docs():
     """
-    https://github.com/skhabiri/Bridges2Prosperity-ML-FastAPI
-    
+    Repo: https://github.com/skhabiri/Bridges2Prosperity-ML-FastAPI
+    *********************************
     """
     return
 
