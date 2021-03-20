@@ -22,8 +22,10 @@ async def root():
     """
     Documentation
     """
-    docs1 = ""
-    return https://raw.githubusercontent.com/skhabiri/Bridges2Prosperity-ML-FastAPI/main/README.md
+    url = "https://raw.githubusercontent.com/skhabiri/Bridges2Prosperity-ML-FastAPI/main/README.md"
+    with open(url, "r") as file:
+    doc = file.read()
+    return doc
 
 app.add_middleware(
     CORSMiddleware,
