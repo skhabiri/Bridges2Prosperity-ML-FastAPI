@@ -1,8 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
-from fastapi import APIRouter
-
 
 from app.api import predict, dbpgsql
 app = FastAPI(
@@ -12,24 +10,19 @@ app = FastAPI(
     docs_url='/',
 )
 
-router = APIRouter()
 
 app.include_router(dbpgsql.router)
-app.include_router(router)
 app.include_router(predict.router)
 # app.include_router(viz.router)
 
 
-@router.get('/docs')
-async def documents():
+@app.get('/')
+def github_repo():
     """
-    Documentation
+    https://github.com/skhabiri/Bridges2Prosperity-ML-FastAPI
+    
     """
-    url = "https://raw.githubusercontent.com/skhabiri/Bridges2Prosperity-ML-FastAPI/main/README.md"
-    with open(url, "r") as file:
-        doc = file.read()
-    print("im in root")
-    return "testinggggggggggggggggggg"
+    return
 
 app.add_middleware(
     CORSMiddleware,
