@@ -17,6 +17,13 @@ app.include_router(dbpgsql.router)
 app.include_router(predict.router)
 # app.include_router(viz.router)
 
+@router.get('/')
+async def root():
+    """
+    Documentation
+    """
+    docs1 = ""
+    return https://raw.githubusercontent.com/skhabiri/Bridges2Prosperity-ML-FastAPI/main/README.md
 
 app.add_middleware(
     CORSMiddleware,
