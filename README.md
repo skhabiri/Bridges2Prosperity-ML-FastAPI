@@ -869,6 +869,21 @@ Follow these instructions to deploy the first time. 🚀
 https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/create-deploy-python-apps.html
 https://fastapi.tiangolo.com/deployment/manually/
 
+## Redeployment
+1. Make any changes on the local machine
+2. confirm the changes on the local web server
+  - `docker-compose build`
+  - `docker-compose up`
+  - open browser at `http://0.0.0.0:80`
+4. Add the changes to the git repository
+  - `git add <filename1, filename2, ...>`
+  - `git commit -m "<mesaage>"`
+  -  optionally push the changes to github cloud: `git push origin main`
+5. push changes to the aws elastic beanstalk
+  - `eb deploy`
+6. open the deployed app on the browser
+  - `en open`
+
 ## Deployed App
 The app is accessible [here](https://b2p.skhabiri.com).
 
