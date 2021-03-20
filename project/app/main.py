@@ -5,9 +5,7 @@ import uvicorn
 from app.api import predict, dbpgsql
 app = FastAPI(
     title='Bridges To Prosperity - FastAPI app',
-    description='''### This Data Science API uses FastAPI framework to deploy
-    a machine learning model for development of a full stack web app. The
-    predictive model is a classifier.''',
+    description="### A data Science API utilizing FastAPI framework to deploy a machine learning model for development of a full stack web app.""",
     version='0.3',
     docs_url='/',
 )
